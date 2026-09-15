@@ -10,14 +10,7 @@ const state = {
     hotspotsVisible: true,
     heatsinkVisible: true,
     selectedComponent: null,
-    currentMode: 'inspect', // 'inspect', 'ddr', 'quiz'
-    quiz: {
-        active: false,
-        currentStep: 0,
-        score: 0,
-        questions: [],
-        answeredCorrectly: false
-    }
+    currentMode: 'inspect' // 'inspect', 'ddr'
 };
 
 // --- Web Audio API SFX Synthesizer ---
@@ -203,59 +196,6 @@ const ramComponentsData = [
         cameraTarget: { x: 3.5, y: -0.2, z: 0 },
         cameraPos: { x: 3.5, y: 0.2, z: 2.8 },
         worldPos: { x: 3.8, y: -0.2, z: 0.15 }
-    }
-];
-
-// --- Interactive 3D Quiz Questions Pool ---
-const quizPool = [
-    {
-        question: "Di manakah komponen chip silikon yang bertugas menyimpan bit data aplikasi secara sementara (volatile) dan harus disegarkan (refresh) jutaan kali per detik?",
-        targetId: "dram-chips",
-        targetName: "DRAM IC Chips (Chip Memori)",
-        hint: "Cari deretan keping chip semikonduktor hitam yang berjejer di sepanjang permukaan PCB!",
-        explanation: "Setiap chip DRAM tersusun atas miliaran sel 1 Transistor 1 Kapasitor (1T1C) yang menyimpan bit data biner."
-    },
-    {
-        question: "Klik 288 pin kontak berlapis emas di tepi bawah yang menyalurkan sinyal bus data dan daya langsung ke slot motherboard!",
-        targetId: "gold-pins",
-        targetName: "Gold Contact Pins (Konektor Emas)",
-        hint: "Lihat jajaran strip emas berkilau di sepanjang bagian paling bawah modul RAM!",
-        explanation: "Lapisan emas 24K anti-korosi memastikan sinyal data frekuensi gigahertz mengalir dengan impedansi minimal."
-    },
-    {
-        question: "Manakah takik celah pengaman mekanis (Key Notch) yang mencegah kesalahan memasang tipe RAM terbalik ke motherboard?",
-        targetId: "notch",
-        targetName: "Key Notch (Takik Pengaman)",
-        hint: "Cari celah takik potongan di antara deretan pin kontak emas bagian bawah!",
-        explanation: "Setiap generasi DDR memiliki posisi takik yang berbeda untuk mencegah korsleting tegangan akibat salah pasang."
-    },
-    {
-        question: "Pada arsitektur DDR5, di mana letak chip Power Management IC (PMIC) yang mengatur voltase presisi 1.1V langsung di atas papan RAM?",
-        targetId: "pmic",
-        targetName: "PMIC (Power Management IC)",
-        hint: "Posisinya berada di bagian tengah atas papan PCB, tepat di dekat lightbar pendingin!",
-        explanation: "Pemindahan PMIC ke modul DDR5 meningkatkan efisiensi daya dan stabilitas sinyal listrik secara signifikan."
-    },
-    {
-        question: "Klik pelat pendingin aluminium (Heat Spreader) yang bertugas menyerap dan membuang panas dari chip DRAM!",
-        targetId: "heatspreader",
-        targetName: "Heat Spreader & RGB Strip",
-        hint: "Pelindung luar berbahan aluminium gelap dengan strip lampu RGB di bagian atasnya!",
-        explanation: "Pendingin aluminium pasif menjaga suhu operasional chip DRAM di bawah batas thermal throttling."
-    },
-    {
-        question: "Klik Printed Circuit Board (PCB) multi-layer yang menjadi pondasi jalur tembaga interkoneksi seluruh komponen!",
-        targetId: "pcb",
-        targetName: "Printed Circuit Board (PCB)",
-        hint: "Papan datar tempat seluruh chip, kapasitor, dan sirkuit listrik menempel!",
-        explanation: "PCB RAM tersusun dari 8 hingga 10 lapisan tembaga dengan pelindung ground plane untuk mencegah crosstalk sinyal."
-    },
-    {
-        question: "Di manakah letak chip mikro SPD (EEPROM) yang menyimpan profil kecepatan, timing latency, dan profil overclocking (XMP/EXPO)?",
-        targetId: "spd",
-        targetName: "SPD EEPROM Chip",
-        hint: "Chip mikro kecil yang terletak di sisi kanan papan sirkuit PCB!",
-        explanation: "BIOS motherboard membaca data dari chip SPD saat boot awal untuk menentukan konfigurasi timing memori yang tepat."
     }
 ];
 
@@ -622,7 +562,7 @@ class RAM3DApp {
     }
 
     updateHotspotsPosition() {
-        if (!state.hotspotsVisible || state.currentMode === 'quiz') {
+        if (!state.hotspotsVisible) {
             this.hotspotElements.forEach(h => h.element.style.display = 'none');
             return;
         }
@@ -814,17 +754,8 @@ class RAM3DApp {
 
             if (hitObj && hitObj.userData.id) {
                 const componentId = hitObj.userData.id;
-
-                if (state.currentMode === 'quiz') {
-                    // Check Quiz Answer via UI controller
-                    if (window.ui) {
-                        window.ui.handleQuizAnswer(componentId);
-                    }
-                } else {
-                    // Inspect Mode
-                    sfx.playClick();
-                    this.selectComponent(componentId);
-                }
+                sfx.playClick();
+                this.selectComponent(componentId);
             }
         }
     }
@@ -844,7 +775,7 @@ class RAM3DApp {
         const time = Date.now() * 0.001;
 
         // Subtle idle oscillation animation for RAM module when idle
-        if (!state.selectedComponent && !state.explodedView && state.currentMode !== 'quiz') {
+        if (!state.selectedComponent && !state.explodedView) {
             this.ramGroup.rotation.y = Math.sin(time * 0.5) * 0.08;
         }
 
@@ -905,11 +836,9 @@ class UIController {
         // Navigation Modes
         document.getElementById('btn-mode-inspect').addEventListener('click', () => this.switchMode('inspect'));
         document.getElementById('btn-mode-ddr').addEventListener('click', () => this.openModal('ddr-modal'));
-        document.getElementById('btn-mode-quiz').addEventListener('click', () => this.startQuiz());
         document.getElementById('btn-help').addEventListener('click', () => this.openModal('help-modal'));
 
         // Modals Close
-        document.getElementById('btn-close-quiz').addEventListener('click', () => this.stopQuiz());
         document.getElementById('btn-close-ddr').addEventListener('click', () => this.closeModal('ddr-modal'));
         document.getElementById('btn-close-help').addEventListener('click', () => this.closeModal('help-modal'));
     }
@@ -936,8 +865,6 @@ class UIController {
         document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
         if (mode === 'inspect') {
             document.getElementById('btn-mode-inspect').classList.add('active');
-            document.getElementById('quiz-hud').classList.add('hidden');
-            document.getElementById('quiz-toast').classList.add('hidden');
             document.getElementById('ddr-modal').classList.add('hidden');
             this.app3D.updateHotspotsPosition();
         }
@@ -951,174 +878,6 @@ class UIController {
     closeModal(modalId) {
         sfx.playClick();
         document.getElementById(modalId).classList.add('hidden');
-    }
-
-    // --- Interactive 3D Quiz System (Floating HUD & Instant Click Validation) ---
-    startQuiz() {
-        sfx.playClick();
-        state.currentMode = 'quiz';
-        state.quiz.active = true;
-        state.quiz.currentStep = 0;
-        state.quiz.score = 0;
-        state.quiz.questions = [...quizPool].sort(() => 0.5 - Math.random()).slice(0, 5);
-
-        // Close info drawer and hide hotspots for clean 3D interaction
-        document.getElementById('info-drawer').classList.remove('open');
-        this.app3D.updateHotspotsPosition();
-
-        // Update nav active button
-        document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-        document.getElementById('btn-mode-quiz').classList.add('active');
-
-        // Show Floating HUD
-        const quizHud = document.getElementById('quiz-hud');
-        quizHud.classList.remove('hidden');
-
-        // Reset Skip Button text and action
-        const skipBtn = document.getElementById('btn-skip-quiz');
-        skipBtn.innerText = 'Lewati Soal Ini';
-        skipBtn.onclick = () => this.nextQuizQuestion();
-
-        this.loadQuizQuestion();
-    }
-
-    stopQuiz() {
-        sfx.playClick();
-        state.quiz.active = false;
-        state.currentMode = 'inspect';
-
-        // Restore heatsink visibility to user's setting
-        if (this.app3D && this.app3D.heatsinkGroup) {
-            this.app3D.heatsinkGroup.visible = state.heatsinkVisible;
-        }
-
-        document.getElementById('quiz-hud').classList.add('hidden');
-        document.getElementById('quiz-toast').classList.add('hidden');
-
-        document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-        document.getElementById('btn-mode-inspect').classList.add('active');
-
-        this.app3D.updateHotspotsPosition();
-    }
-
-    loadQuizQuestion() {
-        state.quiz.answeredCorrectly = false;
-        const currentQ = state.quiz.questions[state.quiz.currentStep];
-
-        document.getElementById('quiz-step').innerText = state.quiz.currentStep + 1;
-        document.getElementById('quiz-score').innerText = state.quiz.score;
-        document.getElementById('quiz-question').innerText = currentQ.question;
-        document.getElementById('quiz-progress').style.width = `${((state.quiz.currentStep + 1) / 5) * 100}%`;
-
-        // Hide active toast
-        document.getElementById('quiz-toast').classList.add('hidden');
-
-        // Automatically hide heatsink for internal component questions (PMIC, DRAM, SPD, PCB) so they are clickable
-        if (this.app3D && this.app3D.heatsinkGroup) {
-            if (currentQ.targetId === 'heatspreader') {
-                this.app3D.heatsinkGroup.visible = true;
-            } else {
-                this.app3D.heatsinkGroup.visible = false;
-            }
-        }
-    }
-
-    // Process user click on 3D RAM model during Quiz Mode
-    handleQuizAnswer(clickedComponentId) {
-        if (!state.quiz.active || state.quiz.answeredCorrectly) return;
-
-        const currentQ = state.quiz.questions[state.quiz.currentStep];
-        const clickedCompData = ramComponentsData.find(c => c.id === clickedComponentId);
-        const clickedName = clickedCompData ? clickedCompData.name : clickedComponentId;
-
-        const toast = document.getElementById('quiz-toast');
-        const toastIcon = document.getElementById('toast-icon');
-        const toastTitle = document.getElementById('toast-title');
-        const toastBadge = document.getElementById('toast-badge');
-        const toastDesc = document.getElementById('toast-desc');
-        const toastHint = document.getElementById('toast-hint');
-
-        clearTimeout(this.toastTimeout);
-        toast.classList.remove('hidden', 'correct', 'wrong');
-
-        if (clickedComponentId === currentQ.targetId) {
-            // --- JAWABAN BENAR! ---
-            state.quiz.answeredCorrectly = true;
-            state.quiz.score += 20;
-            document.getElementById('quiz-score').innerText = state.quiz.score;
-
-            sfx.playSuccess();
-
-            // 3D Mesh Highlight Pulse
-            this.app3D.flashComponentHighlight(clickedComponentId, true);
-
-            // Confetti Celebration
-            if (window.confetti) {
-                window.confetti({
-                    particleCount: 50,
-                    spread: 60,
-                    origin: { y: 0.4 },
-                    colors: ['#00f2fe', '#4facfe', '#00e676', '#ffffff']
-                });
-            }
-
-            // Toast UI Notification
-            toast.classList.add('correct');
-            toastIcon.className = 'fa-solid fa-circle-check';
-            toastTitle.innerText = 'BENAR! Jawaban Tepat!';
-            toastBadge.innerText = '+20 Poin';
-            toastBadge.style.display = 'inline-block';
-            toastDesc.innerText = `Anda mengklik: ${clickedName}`;
-            toastHint.innerText = currentQ.explanation || 'Komponen yang Anda pilih sesuai dengan fungsi yang ditanyakan.';
-
-            // Advance to next question after 1.8s
-            this.toastTimeout = setTimeout(() => {
-                this.nextQuizQuestion();
-            }, 1800);
-
-        } else {
-            // --- JAWABAN KURANG TEPAT! ---
-            sfx.playError();
-
-            // 3D Mesh Warning Flash
-            this.app3D.flashComponentHighlight(clickedComponentId, false);
-
-            // Toast UI Notification
-            toast.classList.add('wrong');
-            toastIcon.className = 'fa-solid fa-circle-xmark';
-            toastTitle.innerText = 'KURANG TEPAT!';
-            toastBadge.style.display = 'none';
-            toastDesc.innerText = `Yang Anda klik adalah: ${clickedName}`;
-            toastHint.innerText = `Petunjuk: ${currentQ.hint}`;
-
-            // Auto-hide toast after 3s so user can click another component
-            this.toastTimeout = setTimeout(() => {
-                toast.classList.add('hidden');
-            }, 3000);
-        }
-    }
-
-    nextQuizQuestion() {
-        state.quiz.currentStep++;
-        if (state.quiz.currentStep >= 5) {
-            // Finish Quiz!
-            sfx.playSuccess();
-            if (window.confetti) {
-                window.confetti({ particleCount: 120, spread: 100, origin: { y: 0.4 } });
-            }
-
-            document.getElementById('quiz-question').innerText = `Selamat! Kuis 3D Selesai. Skor Akhir Anda: ${state.quiz.score} / 100 Poin!`;
-            document.querySelector('.quiz-instruction').innerHTML = `
-                <i class="fa-solid fa-trophy" style="color: var(--accent-gold);"></i>
-                <strong>Pemahaman Arsitektur RAM Teruji!</strong> Anda telah menyelesaikan seluruh soal identifikasi 3D.
-            `;
-
-            const skipBtn = document.getElementById('btn-skip-quiz');
-            skipBtn.innerText = 'Selesaikan Kuis';
-            skipBtn.onclick = () => this.stopQuiz();
-        } else {
-            this.loadQuizQuestion();
-        }
     }
 }
 
