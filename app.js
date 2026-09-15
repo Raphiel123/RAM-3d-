@@ -146,14 +146,14 @@ const ramComponentsData = [
         name: 'PMIC (Power Management IC)',
         badge: 'Manajemen Daya DDR5',
         type: 'Chip Pengatur Tegangan',
-        location: 'Tengah Atas PCB RAM',
+        location: 'Area Tengah Atas PCB (Center-Top)',
         material: 'Semikonduktor & Induktor Daya',
         function: 'Mengatur, mengonversi, dan membagikan tegangan listrik 12V dari PSU menjadi tegangan presisi rendah (1.1V) yang dibutuhkan chip RAM.',
-        architecture: 'Pada DDR4, manajemen daya dilakukan oleh motherboard. Namun pada DDR5, PMIC dipindahkan langsung ke dalam papan RAM. Hal ini memberikan kontrol voltase yang lebih stabil, efisien, dan mengurangi noise sinyal.',
+        architecture: 'Pada DDR4, manajemen daya dilakukan oleh motherboard. Namun pada standar DDR5 JEDEC, PMIC dipindahkan langsung ke area tengah atas papan RAM untuk efisiensi daya dan stabilitas sinyal listrik.',
         funFact: 'Inovasi PMIC langsung di modul RAM membuat overclocking memori DDR5 jauh lebih stabil dibanding generasi terdahulu!',
-        cameraTarget: { x: 0, y: 0.7, z: 0 },
+        cameraTarget: { x: 0, y: 0.75, z: 0 },
         cameraPos: { x: 0, y: 1.0, z: 2.8 },
-        worldPos: { x: 0, y: 0.7, z: 0.15 }
+        worldPos: { x: 0, y: 0.75, z: 0.15 }
     },
     {
         id: 'heatspreader',
@@ -174,28 +174,28 @@ const ramComponentsData = [
         name: 'Printed Circuit Board (PCB)',
         badge: 'Papan Sirkuit',
         type: 'Multi-layer Substrate',
-        location: 'Seluruh Papan Dasar RAM',
+        location: 'Tepi Bawah / Substrat Papan RAM',
         material: 'Fiberglass (FR-4) & Tembaga',
         function: 'Menjadi pondasi fisik tempat menempelnya seluruh komponen elektronik dan menyediakan jalur sirkuit listrik interkoneksi.',
         architecture: 'PCB RAM berkualitas tinggi terdiri dari 8 hingga 10 lapisan (layers) sirkuit tembaga mikroskopis yang ditumpuk secara presisi. Lapisan internal khusus digunakan untuk mengisolasi sinyal bus data berkecepatan giga-hertz agar tidak saling terganggu (crosstalk).',
         funFact: 'Warna hijau atau hitam pada PCB berasal dari lapisan khusus bernama Solder Mask yang melindungi jalur tembaga dari oksidasi dan karat.',
-        cameraTarget: { x: -4.0, y: 0, z: 0 },
-        cameraPos: { x: -4.0, y: 0.5, z: 3.5 },
-        worldPos: { x: -4.5, y: 0, z: 0.1 }
+        cameraTarget: { x: -4.5, y: -0.9, z: 0 },
+        cameraPos: { x: -4.5, y: -0.5, z: 3.0 },
+        worldPos: { x: -4.5, y: -1.05, z: 0.15 }
     },
     {
         id: 'spd',
-        name: 'SPD Chip (Serial Presence Detect)',
-        badge: 'Profil Memori',
-        type: 'EEPROM IC Chip',
-        location: 'Dekat Tepi Tengah PCB',
-        material: 'Semikonduktor EEPROM',
-        function: 'Menyimpan informasi identitas pabrikan, kapasitas, kecepatan (clockspeed), latency, serta profil overclocking (Intel XMP / AMD EXPO).',
-        architecture: 'Saat komputer baru pertama kali dinyalakan (POST), BIOS motherboard akan membaca isi chip SPD ini secara otomatis untuk mengonfigurasi pengaturan voltase dan kecepatan RAM agar sistem booting dengan aman.',
-        funFact: 'Tanpa Chip SPD, motherboard tidak akan tahu berapa kecepatan RAM Anda dan komputer tidak akan bisa menyala!',
-        cameraTarget: { x: 3.5, y: -0.2, z: 0 },
-        cameraPos: { x: 3.5, y: 0.2, z: 2.8 },
-        worldPos: { x: 3.8, y: -0.2, z: 0.15 }
+        name: 'SPD Hub & Thermal Sensor',
+        badge: 'Profil Memori & Suhu',
+        type: 'SPD Hub IC (Standar DDR5)',
+        location: 'Area Tengah Atas PCB (Berdampingan PMIC)',
+        material: 'Semikonduktor & Sensor Suhu Integrated',
+        function: 'Menyimpan informasi identitas, kapasitas, kecepatan, latency, profil overclocking (Intel XMP / AMD EXPO), serta memantau suhu operasional RAM secara real-time.',
+        architecture: 'Pada modul DDR5, chip SPD tradisional digantikan oleh SPD Hub yang mengintegrasikan pengontrol bus I3C dan sensor suhu terpadu yang terletak berdampingan dengan PMIC di area tengah atas PCB.',
+        funFact: 'SPD Hub pada DDR5 mendukung protokol bus I3C yang bekerja jauh lebih cepat dibanding bus I2C kuno pada generasi DDR4!',
+        cameraTarget: { x: 0.8, y: 0.75, z: 0 },
+        cameraPos: { x: 0.8, y: 0.95, z: 2.8 },
+        worldPos: { x: 0.8, y: 0.75, z: 0.15 }
     }
 ];
 
@@ -462,25 +462,25 @@ class RAM3DApp {
         this.ramGroup.add(dramGroup);
         this.meshParts['dram-chips'] = dramGroup;
 
-        // --- 4. PMIC & SPD Micro Components ---
+        // --- 4. PMIC & SPD Hub Micro Components (Center-Top DDR5 JEDEC Standard) ---
         // PMIC Chip (Center Top)
-        const pmicGeo = new THREE.BoxGeometry(0.6, 0.6, 0.12);
+        const pmicGeo = new THREE.BoxGeometry(0.65, 0.65, 0.12);
         const pmicMat = new THREE.MeshStandardMaterial({
             color: 0x2d3748,
             metalness: 0.8,
             roughness: 0.2
         });
         const pmicMesh = new THREE.Mesh(pmicGeo, pmicMat);
-        pmicMesh.position.set(0, 0.7, pcbDepth / 2 + 0.06);
+        pmicMesh.position.set(0, 0.75, pcbDepth / 2 + 0.06);
         pmicMesh.userData = { id: 'pmic' };
         this.ramGroup.add(pmicMesh);
         this.meshParts['pmic'] = pmicMesh;
 
-        // SPD EEPROM Chip
-        const spdGeo = new THREE.BoxGeometry(0.4, 0.4, 0.08);
-        const spdMat = new THREE.MeshStandardMaterial({ color: 0x1a202c, metalness: 0.5 });
+        // SPD Hub & Thermal Sensor IC Chip (Center-Top, Adjacent to PMIC)
+        const spdGeo = new THREE.BoxGeometry(0.45, 0.45, 0.08);
+        const spdMat = new THREE.MeshStandardMaterial({ color: 0x1a202c, metalness: 0.6, roughness: 0.3 });
         const spdMesh = new THREE.Mesh(spdGeo, spdMat);
-        spdMesh.position.set(3.8, -0.2, pcbDepth / 2 + 0.04);
+        spdMesh.position.set(0.8, 0.75, pcbDepth / 2 + 0.04);
         spdMesh.userData = { id: 'spd' };
         this.ramGroup.add(spdMesh);
         this.meshParts['spd'] = spdMesh;
