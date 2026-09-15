@@ -68,6 +68,11 @@
 
             <!-- Floating 3D Control Bar -->
             <div class="controls-toolbar">
+                <button id="btn-autorotate" class="tool-btn active" title="Toggle Auto Rotasi & Transformasi 4D">
+                    <i class="fa-solid fa-rotate"></i>
+                    <span id="autorotate-text">Rotasi 4D: ON</span>
+                </button>
+                <div class="tool-divider"></div>
                 <button id="btn-reset-cam" class="tool-btn" title="Reset Pandangan Kamera">
                     <i class="fa-solid fa-arrows-to-eye"></i>
                     <span>Reset Kamera</span>
@@ -75,12 +80,12 @@
                 <div class="tool-divider"></div>
                 <button id="btn-exploded" class="tool-btn" title="Pisahkan/Bongkar Komponen RAM">
                     <i class="fa-solid fa-diagram-project"></i>
-                    <span id="exploded-text">Mode Bongkar (Exploded)</span>
+                    <span id="exploded-text">Mode Bongkar</span>
                 </button>
                 <div class="tool-divider"></div>
-                <button id="btn-toggle-hotspots" class="tool-btn active" title="Tampilkan/Sembunyikan Titik Penanda">
+                <button id="btn-toggle-hotspots" class="tool-btn active" title="Tampilkan/Sembunyikan Titik Penanda 4D">
                     <i class="fa-solid fa-location-dot"></i>
-                    <span>Penanda Hotspot</span>
+                    <span>Penanda 4D</span>
                 </button>
                 <div class="tool-divider"></div>
                 <button id="btn-toggle-heatsink" class="tool-btn active" title="Lepas/Pasang Heatspreader Aluminium">
@@ -89,57 +94,74 @@
                 </button>
             </div>
 
-            <!-- Interactive Instruction Hint -->
-            <div class="interaction-hint">
-                <i class="fa-solid fa-hand-pointer"></i>
-                <span>Klik & geser untuk rotasi 360° • Scroll untuk Zoom • Klik <b>Hotspot Glowing</b> atau bagian RAM untuk penjelasan</span>
+            <!-- 4D Hypercube Realtime Matrix HUD -->
+            <div id="hud-4d-panel" class="hud-4d-panel">
+                <div class="hud-4d-title"><i class="fa-solid fa-atom fa-spin"></i> 4D Tesseract Matrix</div>
+                <div class="hud-4d-grid">
+                    <div><span>W-Axis:</span> <strong id="val-4d-w">+0.000</strong></div>
+                    <div><span>Pitch:</span> <strong id="val-4d-pitch">+0.00°</strong></div>
+                    <div><span>Yaw:</span> <strong id="val-4d-yaw">0.00°</strong></div>
+                    <div><span>Nodes:</span> <strong id="val-4d-nodes">7 (Hyper-Rotated)</strong></div>
+                </div>
             </div>
 
-            <!-- Side Info Drawer (Detail Komponen) -->
-            <aside id="info-drawer" class="info-drawer">
-                <button id="btn-close-drawer" class="close-btn" aria-label="Tutup Panel Info">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
+            <!-- Interactive Instruction Hint -->
+            <div class="interaction-hint">
+                <i class="fa-solid fa-cube"></i>
+                <span>RAM Berotasi Otomatis dalam Ruang 4D • Klik <b>Hotspot Glowing</b> atau Komponen untuk melihat Penjelasan Langsung di Objek</span>
+            </div>
 
-                <div class="drawer-header">
-                    <span id="comp-badge" class="comp-badge">Komponen Utama</span>
-                    <h2 id="comp-title">Memilih Komponen...</h2>
-                    <p id="comp-subtitle" class="comp-subtitle">Klik titik hotspot di model 3D untuk melihat detail.</p>
+            <!-- Inline 3D Popover Card (Penjelasan Langsung di Komponen RAM) -->
+            <div id="inline-popover" class="inline-popover hidden">
+                <div class="popover-pointer"></div>
+                <div class="popover-card glass-panel">
+                    <button id="btn-close-popover" class="close-btn" aria-label="Tutup Penjelasan">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+
+                    <div class="popover-header">
+                        <span id="comp-badge" class="comp-badge">Komponen Utama</span>
+                        <h2 id="comp-title">Memilih Komponen...</h2>
+                        <p id="comp-subtitle" class="comp-subtitle">Penjelasan Komponen Hardware</p>
+                    </div>
+
+                    <div class="popover-4d-bar">
+                        <i class="fa-solid fa-vector-square"></i>
+                        <span id="comp-4d-coords">Koordinat 4D Hypercube: X: 0.0, Y: 0.0, Z: 0.0, W: 0.0</span>
+                    </div>
+
+                    <div class="popover-body">
+                        <div class="info-card highlight-card">
+                            <h3><i class="fa-solid fa-bullseye"></i> Fungsi Utama</h3>
+                            <p id="comp-function">Informasi mengenai fungsi komponen RAM akan tampil di sini.</p>
+                        </div>
+
+                        <div class="info-card">
+                            <h3><i class="fa-solid fa-gear"></i> Cara Kerja & Arsitektur</h3>
+                            <p id="comp-architecture">Penjelasan mekanisme kerja hardware dan arsitektur sirkuit.</p>
+                        </div>
+
+                        <div class="info-card specs-card">
+                            <h3><i class="fa-solid fa-microchip"></i> Spesifikasi & Material</h3>
+                            <ul id="comp-specs" class="specs-list">
+                                <li><span>Tipe:</span> <strong id="spec-type">-</strong></li>
+                                <li><span>Lokasi:</span> <strong id="spec-location">-</strong></li>
+                                <li><span>Material:</span> <strong id="spec-material">-</strong></li>
+                            </ul>
+                        </div>
+
+                        <div class="info-card tip-card">
+                            <h3><i class="fa-solid fa-lightbulb"></i> Tahukah Anda?</h3>
+                            <p id="comp-funfact">Fakta unik seputar komponen RAM.</p>
+                        </div>
+                    </div>
+
+                    <div class="popover-footer">
+                        <button id="btn-prev-comp" class="secondary-btn"><i class="fa-solid fa-chevron-left"></i> Sebelum</button>
+                        <button id="btn-next-comp" class="secondary-btn">Berikut <i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
                 </div>
-
-                <div class="drawer-body">
-                    <div class="info-card highlight-card">
-                        <h3><i class="fa-solid fa-bullseye"></i> Fungsi Utama</h3>
-                        <p id="comp-function">Informasi mengenai fungsi komponen RAM akan tampil di sini.</p>
-                    </div>
-
-                    <div class="info-card">
-                        <h3><i class="fa-solid fa-gear"></i> Cara Kerja & Arsitektur</h3>
-                        <p id="comp-architecture">Penjelasan mekanisme kerja hardware dan arsitektur sirkuit.</p>
-                    </div>
-
-                    <div class="info-card specs-card">
-                        <h3><i class="fa-solid fa-microchip"></i> Spesifikasi & Karakteristik</h3>
-                        <ul id="comp-specs" class="specs-list">
-                            <li><span>Tipe:</span> <strong id="spec-type">-</strong></li>
-                            <li><span>Lokasi:</span> <strong id="spec-location">-</strong></li>
-                            <li><span>Material:</span> <strong id="spec-material">-</strong></li>
-                        </ul>
-                    </div>
-
-                    <div class="info-card tip-card">
-                        <h3><i class="fa-solid fa-lightbulb"></i> Tahukah Anda?</h3>
-                        <p id="comp-funfact">Fakta unik seputar komponen RAM.</p>
-                    </div>
-                </div>
-
-                <div class="drawer-footer">
-                    <button id="btn-prev-comp" class="secondary-btn"><i class="fa-solid fa-chevron-left"></i>
-                        Sebelum</button>
-                    <button id="btn-next-comp" class="secondary-btn">Berikut <i
-                            class="fa-solid fa-chevron-right"></i></button>
-                </div>
-            </aside>
+            </div>
 
 
 
