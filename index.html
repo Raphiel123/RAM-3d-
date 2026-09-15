@@ -1,783 +1,262 @@
-:root {
-    --bg-dark: #0a0e17;
-    --bg-canvas: #06090f;
-    --panel-bg: rgba(15, 23, 42, 0.75);
-    --panel-border: rgba(56, 189, 248, 0.2);
-    --panel-border-glow: rgba(0, 242, 254, 0.5);
-
-    --primary-cyan: #00f2fe;
-    --primary-blue: #4facfe;
-    --accent-violet: #8a2be2;
-    --accent-gold: #ffd700;
-    --accent-emerald: #00e676;
-    --accent-rose: #ff2a6d;
-
-    --text-main: #f8fafc;
-    --text-muted: #94a3b8;
-    --text-dim: #64748b;
-
-    --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
-    --font-code: 'Fira Code', monospace;
-
-    --radius-sm: 8px;
-    --radius-md: 14px;
-    --radius-lg: 20px;
-    --radius-full: 9999px;
-
-    --shadow-glow: 0 0 25px rgba(0, 242, 254, 0.25);
-    --shadow-card: 0 12px 32px rgba(0, 0, 0, 0.5);
-    --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-normal: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Reset & Global Settings */
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    user-select: none;
-    -webkit-user-select: none;
-}
-
-body,
-html {
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    background-color: var(--bg-dark);
-    color: var(--text-main);
-    font-family: var(--font-sans);
-    font-size: 15px;
-    line-height: 1.6;
-}
-
-#app {
-    display: flex;
-    flex-direction: column;
-    width: 100vw;
-    height: 100vh;
-    position: relative;
-}
-
-/* Glassmorphism Panel Class */
-.glass-panel {
-    background: var(--panel-bg);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid var(--panel-border);
-    box-shadow: var(--shadow-card);
-}
-
-/* Header Navbar */
-.navbar {
-    height: 64px;
-    background: rgba(10, 14, 23, 0.85);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--panel-border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 24px;
-    z-index: 50;
-}
-
-.brand {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.brand-icon {
-    width: 40px;
-    height: 40px;
-    background: linear-gradient(135deg, var(--primary-cyan), var(--accent-violet));
-    border-radius: var(--radius-sm);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-    color: #fff;
-    box-shadow: 0 0 15px rgba(0, 242, 254, 0.4);
-}
-
-.brand-text {
-    display: flex;
-    flex-direction: column;
-}
-
-.brand-title {
-    font-weight: 700;
-    font-size: 1.15rem;
-    letter-spacing: 0.5px;
-    background: linear-gradient(90deg, #fff, var(--primary-cyan));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-.brand-subtitle {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-}
-
-.nav-links {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: rgba(255, 255, 255, 0.04);
-    padding: 4px;
-    border-radius: var(--radius-full);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.nav-btn {
-    background: transparent;
-    border: none;
-    color: var(--text-muted);
-    padding: 8px 18px;
-    font-family: var(--font-sans);
-    font-size: 0.85rem;
-    font-weight: 500;
-    border-radius: var(--radius-full);
-    cursor: pointer;
-    transition: var(--transition-fast);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.nav-btn:hover {
-    color: var(--text-main);
-    background: rgba(255, 255, 255, 0.05);
-}
-
-.nav-btn.active {
-    background: linear-gradient(135deg, rgba(0, 242, 254, 0.2), rgba(79, 172, 254, 0.2));
-    color: var(--primary-cyan);
-    border: 1px solid var(--panel-border-glow);
-    box-shadow: 0 0 12px rgba(0, 242, 254, 0.3);
-    font-weight: 600;
-}
-
-.nav-btn.highlight {
-    color: var(--accent-gold);
-}
-
-.navbar-actions {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.icon-btn {
-    width: 38px;
-    height: 38px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: var(--text-main);
-    border-radius: var(--radius-sm);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    cursor: pointer;
-    transition: var(--transition-fast);
-}
-
-.icon-btn:hover {
-    background: rgba(0, 242, 254, 0.15);
-    border-color: var(--primary-cyan);
-    color: var(--primary-cyan);
-    box-shadow: 0 0 10px rgba(0, 242, 254, 0.3);
-}
-
-/* Main Viewport */
-.viewport-container {
-    flex: 1;
-    position: relative;
-    overflow: hidden;
-    background: radial-gradient(circle at 50% 40%, #0d1527 0%, var(--bg-canvas) 85%);
-}
-
-#canvas-container {
-    width: 100%;
-    height: 100%;
-    position: absolute;
-    top: 0;
-    left: 0;
-    cursor: grab;
-}
-
-#canvas-container:active {
-    cursor: grabbing;
-}
-
-/* Loading Screen */
-.loading-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: var(--bg-dark);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 100;
-    transition: opacity 0.5s ease, visibility 0.5s;
-}
-
-.loading-overlay.hidden {
-    opacity: 0;
-    visibility: hidden;
-}
-
-.spinner-box {
-    text-align: center;
-}
-
-.tech-spinner {
-    width: 60px;
-    height: 60px;
-    margin: 0 auto 20px;
-    border: 3px solid rgba(0, 242, 254, 0.1);
-    border-top: 3px solid var(--primary-cyan);
-    border-right: 3px solid var(--accent-violet);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    box-shadow: 0 0 20px rgba(0, 242, 254, 0.4);
-}
-
-@keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
-
-    100% {
-        transform: rotate(360deg);
-    }
-}
-
-.spinner-box h2 {
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin-bottom: 6px;
-    color: #fff;
-}
-
-.spinner-box p {
-    color: var(--text-muted);
-    font-size: 0.85rem;
-}
-
-/* Floating Controls Toolbar */
-.controls-toolbar {
-    position: absolute;
-    bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(15, 23, 42, 0.85);
-    backdrop-filter: blur(12px);
-    border: 1px solid var(--panel-border);
-    border-radius: var(--radius-full);
-    padding: 6px 12px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    box-shadow: var(--shadow-card), var(--shadow-glow);
-    z-index: 30;
-}
-
-.tool-btn {
-    background: transparent;
-    border: none;
-    color: var(--text-muted);
-    padding: 8px 14px;
-    border-radius: var(--radius-full);
-    font-family: var(--font-sans);
-    font-size: 0.8rem;
-    font-weight: 500;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: var(--transition-fast);
-}
-
-.tool-btn i {
-    font-size: 14px;
-    color: var(--primary-cyan);
-}
-
-.tool-btn:hover {
-    color: var(--text-main);
-    background: rgba(255, 255, 255, 0.08);
-}
-
-.tool-btn.active {
-    background: rgba(0, 242, 254, 0.15);
-    color: #fff;
-    border: 1px solid rgba(0, 242, 254, 0.4);
-}
-
-.tool-divider {
-    width: 1px;
-    height: 18px;
-    background: rgba(255, 255, 255, 0.1);
-}
-
-/* Interaction Hint Tooltip */
-.interaction-hint {
-    position: absolute;
-    top: 20px;
-    left: 24px;
-    background: rgba(15, 23, 42, 0.65);
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: var(--radius-full);
-    padding: 6px 16px;
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    pointer-events: none;
-    z-index: 20;
-}
-
-.interaction-hint i {
-    color: var(--primary-cyan);
-}
-
-.interaction-hint b {
-    color: #fff;
-}
-
-/* 3D Hotspot Markers */
-.hotspot-node {
-    position: absolute;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: rgba(0, 242, 254, 0.3);
-    border: 2px solid var(--primary-cyan);
-    box-shadow: 0 0 15px var(--primary-cyan);
-    cursor: pointer;
-    transform: translate(-50%, -50%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 25;
-    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-.hotspot-node::after {
-    content: '';
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    border: 2px solid var(--primary-cyan);
-    animation: pulse 2s infinite ease-out;
-}
-
-@keyframes pulse {
-    0% {
-        transform: scale(1);
-        opacity: 0.8;
-    }
-
-    100% {
-        transform: scale(2.2);
-        opacity: 0;
-    }
-}
-
-.hotspot-node:hover {
-    transform: translate(-50%, -50%) scale(1.3);
-    background: var(--primary-cyan);
-}
-
-.hotspot-label {
-    position: absolute;
-    left: 32px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: rgba(10, 14, 23, 0.9);
-    border: 1px solid var(--panel-border-glow);
-    color: var(--text-main);
-    padding: 4px 10px;
-    border-radius: var(--radius-sm);
-    font-size: 0.75rem;
-    font-weight: 600;
-    white-space: nowrap;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-}
-
-.hotspot-node:hover .hotspot-label {
-    opacity: 1;
-}
-
-/* Side Info Drawer */
-.info-drawer {
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 440px;
-    height: 100%;
-    background: var(--panel-bg);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-left: 1px solid var(--panel-border);
-    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
-    display: flex;
-    flex-direction: column;
-    z-index: 40;
-    transform: translateX(100%);
-    transition: transform var(--transition-normal);
-}
-
-.info-drawer.open {
-    transform: translateX(0);
-}
-
-.close-btn {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    width: 32px;
-    height: 32px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
-    color: var(--text-muted);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    transition: var(--transition-fast);
-}
-
-.close-btn:hover {
-    background: rgba(255, 42, 109, 0.2);
-    border-color: var(--accent-rose);
-    color: var(--accent-rose);
-}
-
-.drawer-header {
-    padding: 30px 24px 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.comp-badge {
-    display: inline-block;
-    padding: 3px 10px;
-    background: rgba(0, 242, 254, 0.15);
-    border: 1px solid var(--panel-border-glow);
-    color: var(--primary-cyan);
-    border-radius: var(--radius-full);
-    font-size: 0.72rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 8px;
-}
-
-.drawer-header h2 {
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: #fff;
-    margin-bottom: 4px;
-}
-
-.comp-subtitle {
-    font-size: 0.82rem;
-    color: var(--text-muted);
-}
-
-.drawer-body {
-    flex: 1;
-    overflow-y: auto;
-    padding: 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
-}
-
-.drawer-body::-webkit-scrollbar {
-    width: 6px;
-}
-
-.drawer-body::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.15);
-    border-radius: 3px;
-}
-
-.info-card {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: var(--radius-md);
-    padding: 16px;
-}
-
-.info-card h3 {
-    font-size: 0.92rem;
-    font-weight: 600;
-    color: var(--text-main);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 8px;
-}
-
-.info-card h3 i {
-    color: var(--primary-cyan);
-}
-
-.info-card p {
-    font-size: 0.88rem;
-    color: var(--text-muted);
-    line-height: 1.55;
-}
-
-.highlight-card {
-    background: linear-gradient(135deg, rgba(0, 242, 254, 0.08), rgba(138, 43, 226, 0.08));
-    border: 1px solid rgba(0, 242, 254, 0.25);
-}
-
-.tip-card {
-    background: rgba(255, 215, 0, 0.05);
-    border: 1px solid rgba(255, 215, 0, 0.2);
-}
-
-.tip-card h3 i {
-    color: var(--accent-gold);
-}
-
-.specs-list {
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    font-size: 0.85rem;
-}
-
-.specs-list li {
-    display: flex;
-    justify-content: space-between;
-    border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
-    padding-bottom: 4px;
-}
-
-.specs-list span {
-    color: var(--text-dim);
-}
-
-.specs-list strong {
-    color: var(--text-main);
-}
-
-.drawer-footer {
-    padding: 16px 24px;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-    display: flex;
-    gap: 12px;
-}
-
-.secondary-btn {
-    flex: 1;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: var(--text-main);
-    padding: 10px;
-    border-radius: var(--radius-sm);
-    font-family: var(--font-sans);
-    font-weight: 500;
-    font-size: 0.85rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    transition: var(--transition-fast);
-}
-
-.secondary-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: var(--primary-cyan);
-}
-
-/* Modals Overlay (For DDR & Help) */
-.modal-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(6, 9, 15, 0.82);
-    backdrop-filter: blur(10px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 60;
-    opacity: 1;
-    transition: opacity 0.3s ease;
-}
-
-.modal-overlay.hidden {
-    opacity: 0;
-    pointer-events: none;
-}
-
-
-
-/* DDR Table Modal */
-.ddr-card {
-    width: 800px;
-    max-width: 92%;
-    border-radius: var(--radius-lg);
-    padding: 28px;
-}
-
-.modal-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 20px;
-}
-
-.modal-header h2 {
-    font-size: 1.25rem;
-    color: #fff;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.ddr-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.88rem;
-    margin-bottom: 20px;
-}
-
-.ddr-table th,
-.ddr-table td {
-    padding: 12px 16px;
-    text-align: left;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.ddr-table th {
-    background: rgba(255, 255, 255, 0.04);
-    color: var(--primary-cyan);
-    font-weight: 600;
-}
-
-.ddr-table td {
-    color: var(--text-muted);
-}
-
-.ddr-table tr:hover td {
-    background: rgba(255, 255, 255, 0.02);
-}
-
-.ddr-highlight-box {
-    background: rgba(0, 242, 254, 0.08);
-    border: 1px solid rgba(0, 242, 254, 0.3);
-    border-radius: var(--radius-md);
-    padding: 14px 18px;
-    display: flex;
-    gap: 12px;
-    font-size: 0.85rem;
-    color: var(--text-muted);
-}
-
-.ddr-highlight-box i {
-    color: var(--primary-cyan);
-    font-size: 1.2rem;
-}
-
-/* Help Modal */
-.help-card {
-    width: 540px;
-    max-width: 90%;
-    border-radius: var(--radius-lg);
-    padding: 28px;
-}
-
-.help-body {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.help-step {
-    display: flex;
-    gap: 16px;
-    align-items: flex-start;
-    background: rgba(255, 255, 255, 0.03);
-    padding: 14px;
-    border-radius: var(--radius-md);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.help-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: var(--radius-sm);
-    background: rgba(0, 242, 254, 0.12);
-    color: var(--primary-cyan);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.1rem;
-    flex-shrink: 0;
-}
-
-.help-step h4 {
-    color: #fff;
-    font-size: 0.95rem;
-    margin-bottom: 2px;
-}
-
-.help-step p {
-    font-size: 0.85rem;
-    color: var(--text-muted);
-}
-
-/* Responsive Breakpoints */
-@media (max-width: 768px) {
-    .navbar {
-        padding: 0 16px;
-    }
-
-    .brand-title {
-        font-size: 1rem;
-    }
-
-    .brand-subtitle {
-        display: none;
-    }
-
-    .nav-links {
-        display: none;
-    }
-
-    .info-drawer {
-        width: 100%;
-    }
-
-    .controls-toolbar {
-        width: 90%;
-        justify-content: space-around;
-        padding: 4px 8px;
-    }
-
-    .tool-btn span {
-        display: none;
-    }
-}
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modul Pembelajaran Interaktif 3D: Hardware RAM</title>
+    <meta name="description"
+        content="Modul pembelajaran interaktif 3D komponen hardware komputer RAM (Random Access Memory). Pelajari fungsi, bagian-bagian, dan arsitektur RAM secara 3D.">
+    <!-- Google Fonts: Outfit & Fira Code -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Outfit:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- App Styles -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="app">
+        <!-- Top Navigation Bar -->
+        <header class="navbar">
+            <div class="brand">
+                <div class="brand-icon">
+                    <i class="fa-solid fa-microchip"></i>
+                </div>
+                <div class="brand-text">
+                    <span class="brand-title">RAM 3D Inspector</span>
+                    <span class="brand-subtitle">Modul Pembelajaran Arsitektur Komputer</span>
+                </div>
+            </div>
+
+            <nav class="nav-links">
+                <button id="btn-mode-inspect" class="nav-btn active">
+                    <i class="fa-solid fa-cube"></i> Mode Inspeksi 3D
+                </button>
+                <button id="btn-mode-ddr" class="nav-btn">
+                    <i class="fa-solid fa-layer-group"></i> Evolusi DDR
+                </button>
+            </nav>
+
+            <div class="navbar-actions">
+                <button id="btn-sound" class="icon-btn" title="Toggle Efek Suara (Audio SFX)">
+                    <i class="fa-solid fa-volume-high"></i>
+                </button>
+                <button id="btn-help" class="icon-btn" title="Petunjuk Penggunaan">
+                    <i class="fa-solid fa-circle-question"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Workspace Container -->
+        <main class="viewport-container" id="viewport-container">
+            <!-- 3D Canvas Container -->
+            <div id="canvas-container"></div>
+
+            <!-- Loading Screen Overlay -->
+            <div id="loading-screen" class="loading-overlay">
+                <div class="spinner-box">
+                    <div class="tech-spinner"></div>
+                    <h2>Memuat Model 3D RAM...</h2>
+                    <p>Membangun arsitektur komponen & sirkuit 3D...</p>
+                </div>
+            </div>
+
+            <!-- Floating 3D Control Bar -->
+            <div class="controls-toolbar">
+                <button id="btn-reset-cam" class="tool-btn" title="Reset Pandangan Kamera">
+                    <i class="fa-solid fa-arrows-to-eye"></i>
+                    <span>Reset Kamera</span>
+                </button>
+                <div class="tool-divider"></div>
+                <button id="btn-exploded" class="tool-btn" title="Pisahkan/Bongkar Komponen RAM">
+                    <i class="fa-solid fa-diagram-project"></i>
+                    <span id="exploded-text">Mode Bongkar (Exploded)</span>
+                </button>
+                <div class="tool-divider"></div>
+                <button id="btn-toggle-hotspots" class="tool-btn active" title="Tampilkan/Sembunyikan Titik Penanda">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <span>Penanda Hotspot</span>
+                </button>
+                <div class="tool-divider"></div>
+                <button id="btn-toggle-heatsink" class="tool-btn active" title="Lepas/Pasang Heatspreader Aluminium">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <span id="heatsink-text">Sembunyikan Pendingin</span>
+                </button>
+            </div>
+
+            <!-- Interactive Instruction Hint -->
+            <div class="interaction-hint">
+                <i class="fa-solid fa-hand-pointer"></i>
+                <span>Klik & geser untuk rotasi 360° • Scroll untuk Zoom • Klik <b>Hotspot Glowing</b> atau bagian RAM untuk penjelasan</span>
+            </div>
+
+            <!-- Side Info Drawer (Detail Komponen) -->
+            <aside id="info-drawer" class="info-drawer">
+                <button id="btn-close-drawer" class="close-btn" aria-label="Tutup Panel Info">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+
+                <div class="drawer-header">
+                    <span id="comp-badge" class="comp-badge">Komponen Utama</span>
+                    <h2 id="comp-title">Memilih Komponen...</h2>
+                    <p id="comp-subtitle" class="comp-subtitle">Klik titik hotspot di model 3D untuk melihat detail.</p>
+                </div>
+
+                <div class="drawer-body">
+                    <div class="info-card highlight-card">
+                        <h3><i class="fa-solid fa-bullseye"></i> Fungsi Utama</h3>
+                        <p id="comp-function">Informasi mengenai fungsi komponen RAM akan tampil di sini.</p>
+                    </div>
+
+                    <div class="info-card">
+                        <h3><i class="fa-solid fa-gear"></i> Cara Kerja & Arsitektur</h3>
+                        <p id="comp-architecture">Penjelasan mekanisme kerja hardware dan arsitektur sirkuit.</p>
+                    </div>
+
+                    <div class="info-card specs-card">
+                        <h3><i class="fa-solid fa-microchip"></i> Spesifikasi & Karakteristik</h3>
+                        <ul id="comp-specs" class="specs-list">
+                            <li><span>Tipe:</span> <strong id="spec-type">-</strong></li>
+                            <li><span>Lokasi:</span> <strong id="spec-location">-</strong></li>
+                            <li><span>Material:</span> <strong id="spec-material">-</strong></li>
+                        </ul>
+                    </div>
+
+                    <div class="info-card tip-card">
+                        <h3><i class="fa-solid fa-lightbulb"></i> Tahukah Anda?</h3>
+                        <p id="comp-funfact">Fakta unik seputar komponen RAM.</p>
+                    </div>
+                </div>
+
+                <div class="drawer-footer">
+                    <button id="btn-prev-comp" class="secondary-btn"><i class="fa-solid fa-chevron-left"></i>
+                        Sebelum</button>
+                    <button id="btn-next-comp" class="secondary-btn">Berikut <i
+                            class="fa-solid fa-chevron-right"></i></button>
+                </div>
+            </aside>
+
+
+
+            <!-- DDR Evolution Modal -->
+            <div id="ddr-modal" class="modal-overlay hidden">
+                <div class="ddr-card glass-panel">
+                    <div class="modal-header">
+                        <h2><i class="fa-solid fa-layer-group"></i> Perbandingan Generasi RAM (DDR3 vs DDR4 vs DDR5)</h2>
+                        <button id="btn-close-ddr" class="close-btn"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <div class="ddr-body">
+                        <table class="ddr-table">
+                            <thead>
+                                <tr>
+                                    <th>Karakteristik</th>
+                                    <th>DDR3</th>
+                                    <th>DDR4</th>
+                                    <th>DDR5 (Standar Saat Ini)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Kecepatan Data (MT/s)</strong></td>
+                                    <td>800 - 2133 MT/s</td>
+                                    <td>1600 - 3200 MT/s</td>
+                                    <td>4800 - 8400+ MT/s</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Tegangan (Voltase)</strong></td>
+                                    <td>1.5V (Tinggi)</td>
+                                    <td>1.2V (Hemat)</td>
+                                    <td>1.1V (Sangat Efisien)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Manajemen Daya (PMIC)</strong></td>
+                                    <td>Di Motherboard</td>
+                                    <td>Di Motherboard</td>
+                                    <td><strong>Terintegrasi di Modul RAM</strong></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Jumlah Pin Kontak</strong></td>
+                                    <td>240 Pin</td>
+                                    <td>288 Pin (Berlekuk)</td>
+                                    <td>288 Pin (Notch Tengah Baru)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Posisi Notch (Takik)</strong></td>
+                                    <td>Kiri Tengah</td>
+                                    <td>Sedikit ke Kanan</td>
+                                    <td>Hampir di Tengah Sempurna</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Kapasitas Max per Modul</strong></td>
+                                    <td>8 GB</td>
+                                    <td>32 GB</td>
+                                    <td><strong>Hingga 128 GB+</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="ddr-highlight-box">
+                            <i class="fa-solid fa-circle-info"></i>
+                            <p><strong>Catatan Penting Arsitektur:</strong> RAM DDR3, DDR4, dan DDR5 memiliki posisi
+                                takik (notch) yang berbeda secara sengaja. Hal ini untuk mencegah kesalahan fisik saat
+                                memasang jenis modul RAM yang tidak didukung oleh slot motherboard!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Help & Guide Modal -->
+            <div id="help-modal" class="modal-overlay hidden">
+                <div class="help-card glass-panel">
+                    <div class="modal-header">
+                        <h2><i class="fa-solid fa-circle-question"></i> Petunjuk Penggunaan Modul</h2>
+                        <button id="btn-close-help" class="close-btn"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <div class="help-body">
+                        <div class="help-step">
+                            <div class="help-icon"><i class="fa-solid fa-arrows-spin"></i></div>
+                            <div>
+                                <h4>Navigasi 3D</h4>
+                                <p>Tahan & geser klik kiri mouse untuk memutar objek RAM 360°. Scroll roda mouse untuk
+                                    memperbesar/memperkecil (zoom).</p>
+                            </div>
+                        </div>
+                        <div class="help-step">
+                            <div class="help-icon"><i class="fa-solid fa-hand-pointer"></i></div>
+                            <div>
+                                <h4>Melihat Detail Komponen</h4>
+                                <p>Klik pada titik <b>Hotspot Glowing</b> bercahaya atau klik bagian fisik objek 3D
+                                    secara langsung untuk membuka kartu penjelasan resmi.</p>
+                            </div>
+                        </div>
+                        <div class="help-step">
+                            <div class="help-icon"><i class="fa-solid fa-diagram-project"></i></div>
+                            <div>
+                                <h4>Mode Bongkar (Exploded View)</h4>
+                                <p>Gunakan tombol <b>Mode Bongkar</b> di toolbar bawah untuk memisahkan pendingin
+                                    aluminium dan melihat struktur IC di dalamnya.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- External 3D & Animation Libraries via CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <!-- Main Application Logic Script -->
+    <script src="app.js"></script>
+</body>
+
+</html>
