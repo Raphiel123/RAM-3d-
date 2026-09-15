@@ -1,5 +1,5 @@
 /* ==========================================================================
-   RAM 3D Inspector - Main Application Logic (Three.js Engine & UI)
+   RAM 3D Inspector - Main Application Logic (Three.js Engine & 4D UI)
    Modul Pembelajaran Interaktif Arsitektur & Organisasi Komputer
    ========================================================================== */
 
@@ -10,7 +10,8 @@ const state = {
     hotspotsVisible: true,
     heatsinkVisible: true,
     selectedComponent: null,
-    currentMode: 'inspect' // 'inspect', 'ddr'
+    currentMode: 'inspect', // 'inspect', 'ddr'
+    autoRotate: true // Rotasi 4D otomatis aktif secara default!
 };
 
 // --- Web Audio API SFX Synthesizer ---
@@ -178,7 +179,7 @@ const ramComponentsData = [
         material: 'Fiberglass (FR-4) & Tembaga',
         function: 'Menjadi pondasi fisik tempat menempelnya seluruh komponen elektronik dan menyediakan jalur sirkuit listrik interkoneksi.',
         architecture: 'PCB RAM berkualitas tinggi terdiri dari 8 hingga 10 lapisan (layers) sirkuit tembaga mikroskopis yang ditumpuk secara presisi. Lapisan internal khusus digunakan untuk mengisolasi sinyal bus data berkecepatan giga-hertz agar tidak saling terganggu (crosstalk).',
-        funFact: 'Warna hijau atau hitam pada PCB berasal dari lapisan khusus bernama Solder Mask yang melindungi jalur tembaga dari oksidasi dan karat.',
+        funFact: 'Warna terang atau metallic putih pada PCB berasal dari lapisan khusus bernama White Solder Mask yang melindungi jalur tembaga.',
         cameraTarget: { x: -4.5, y: -0.9, z: 0 },
         cameraPos: { x: -4.5, y: -0.5, z: 3.0 },
         worldPos: { x: -4.5, y: -1.05, z: 0.15 }
@@ -199,6 +200,73 @@ const ramComponentsData = [
     }
 ];
 
+// --- 4D Tesseract Geometry Helper ---
+class Tesseract4D {
+    constructor(scale = 0.3) {
+        this.scale = scale;
+        // 16 Vertices of a 4D Hypercube: (+-1, +-1, +-1, +-1)
+        this.vertices4D = [];
+        for (let x of [-1, 1]) {
+            for (let y of [-1, 1]) {
+                for (let z of [-1, 1]) {
+                    for (let w of [-1, 1]) {
+                        this.vertices4D.push([x * scale, y * scale, z * scale, w * scale]);
+                    }
+                }
+            }
+        }
+
+        // Edges connecting vertices that differ in exactly one coordinate (32 edges)
+        this.edges = [];
+        for (let i = 0; i < 16; i++) {
+            for (let j = i + 1; j < 16; j++) {
+                let diff = 0;
+                for (let k = 0; k < 4; k++) {
+                    if (this.vertices4D[i][k] !== this.vertices4D[j][k]) diff++;
+                }
+                if (diff === 1) {
+                    this.edges.push([i, j]);
+                }
+            }
+        }
+    }
+
+    // Rotate vertices in 4D space (XW and YW planes) and project to 3D
+    projectTo3D(angleXW, angleYW) {
+        const projected3D = [];
+        const cosXW = Math.cos(angleXW), sinXW = Math.sin(angleXW);
+        const cosYW = Math.cos(angleYW), sinYW = Math.sin(angleYW);
+
+        for (let v of this.vertices4D) {
+            let [x, y, z, w] = v;
+
+            // Rotate in XW plane
+            let x1 = x * cosXW - w * sinXW;
+            let w1 = x * sinXW + w * cosXW;
+
+            // Rotate in YW plane
+            let y1 = y * cosYW - w1 * sinYW;
+            let w2 = y * sinYW + w1 * cosYW;
+
+            // Perspective Projection from 4D to 3D: distance d = 2.2
+            const distance = 2.2;
+            const factor = 1 / (distance - w2);
+
+            projected3D.push(new THREE.Vector3(x1 * factor, y1 * factor, z * factor));
+        }
+
+        // Return array of positions for LineSegments (32 edges * 2 points * 3 coords = 192 floats)
+        const linePositions = [];
+        for (let edge of this.edges) {
+            const p1 = projected3D[edge[0]];
+            const p2 = projected3D[edge[1]];
+            linePositions.push(p1.x, p1.y, p1.z);
+            linePositions.push(p2.x, p2.y, p2.z);
+        }
+        return new Float32Array(linePositions);
+    }
+}
+
 // --- Three.js Application Engine ---
 class RAM3DApp {
     constructor() {
@@ -213,6 +281,8 @@ class RAM3DApp {
         this.ramGroup = new THREE.Group();
         this.meshParts = {};
         this.hotspotElements = [];
+        this.tesseractMeshes = [];
+        this.quantumParticles = null;
 
         this.pcbTexture = this.createPCBTexture();
         this.chipTexture = this.createChipTexture();
@@ -221,9 +291,9 @@ class RAM3DApp {
     }
 
     init() {
-        // 1. Scene Setup
+        // 1. Scene Setup (Bright Light Background)
         this.scene = new THREE.Scene();
-        this.scene.fog = new THREE.FogExp2(0x06090f, 0.04);
+        this.scene.fog = new THREE.FogExp2(0xf1f5f9, 0.02);
 
         // 2. Camera Setup
         this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
@@ -236,7 +306,8 @@ class RAM3DApp {
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        this.renderer.toneMappingExposure = 1.2;
+        this.renderer.toneMappingExposure = 1.35;
+        this.renderer.setClearColor(0xf1f5f9, 1);
         this.container.appendChild(this.renderer.domElement);
 
         // 4. Orbit Controls
@@ -245,96 +316,99 @@ class RAM3DApp {
         this.controls.dampingFactor = 0.05;
         this.controls.minDistance = 2.5;
         this.controls.maxDistance = 14;
-        this.controls.maxPolarAngle = Math.PI / 2 + 0.1;
+        this.controls.maxPolarAngle = Math.PI / 2 + 0.15;
 
-        // 5. Lighting
+        // 5. Lighting (Bright High-End Studio Lights)
         this.setupLighting();
 
         // 6. Build 3D RAM Model
         this.buildRAMModel();
 
-        // 7. Create Hotspots HTML Elements
+        // 7. Build 4D Quantum Particle Field
+        this.build4DQuantumParticles();
+
+        // 8. Create Hotspots & Popover
         this.setupHotspots();
 
-        // 8. Event Listeners
+        // 9. Event Listeners
         window.addEventListener('resize', () => this.onWindowResize());
         this.renderer.domElement.addEventListener('pointerdown', (e) => this.onPointerDown(e));
 
-        // 9. Start Render Loop
+        // 10. Start Render Loop
         this.animate();
 
         // Hide Loading Screen
         setTimeout(() => {
             const ls = document.getElementById('loading-screen');
             if (ls) ls.classList.add('hidden');
-        }, 600);
+        }, 500);
     }
 
     setupLighting() {
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
         this.scene.add(ambientLight);
 
-        // Key Light
-        const keyLight = new THREE.DirectionalLight(0xffffff, 1.2);
-        keyLight.position.set(5, 8, 6);
+        // Main Studio Key Light
+        const keyLight = new THREE.DirectionalLight(0xffffff, 1.5);
+        keyLight.position.set(6, 10, 8);
         keyLight.castShadow = true;
         keyLight.shadow.mapSize.width = 2048;
         keyLight.shadow.mapSize.height = 2048;
         this.scene.add(keyLight);
 
-        // Fill Light (Soft Cyan Glow)
-        const fillLight = new THREE.DirectionalLight(0x00f2fe, 0.8);
-        fillLight.position.set(-6, 3, -4);
+        // Fill Light (Sky Blue Tint)
+        const fillLight = new THREE.DirectionalLight(0x38bdf8, 0.9);
+        fillLight.position.set(-6, 4, -4);
         this.scene.add(fillLight);
 
-        // Accent Light (Violet Rim Light)
-        const rimLight = new THREE.DirectionalLight(0x8a2be2, 1.0);
-        rimLight.position.set(0, -5, -6);
+        // Accent Rim Light (Violet Glow)
+        const rimLight = new THREE.DirectionalLight(0xa855f7, 1.1);
+        rimLight.position.set(0, -6, -6);
         this.scene.add(rimLight);
     }
 
-    // Procedural Circuit Trace Texture Canvas
+    // Procedural Circuit Trace Texture Canvas (Bright Light Silver PCB with Gold Traces)
     createPCBTexture() {
         const canvas = document.createElement('canvas');
         canvas.width = 1024;
         canvas.height = 256;
         const ctx = canvas.getContext('2d');
 
-        // Dark Matte PCB Background
-        ctx.fillStyle = '#0a1410';
+        // Light Silver-Emerald PCB Background
+        ctx.fillStyle = '#e2e8f0';
         ctx.fillRect(0, 0, 1024, 256);
 
         // Subtle PCB grid texture
-        ctx.fillStyle = 'rgba(15, 30, 22, 0.3)';
-        for (let x = 0; x < 1024; x += 10) {
+        ctx.fillStyle = 'rgba(203, 213, 225, 0.4)';
+        for (let x = 0; x < 1024; x += 12) {
             ctx.fillRect(x, 0, 2, 256);
         }
 
         // Gold Circuit Traces Lines
-        ctx.strokeStyle = 'rgba(212, 175, 55, 0.28)';
-        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = 'rgba(217, 119, 6, 0.45)';
+        ctx.lineWidth = 1.8;
 
-        for (let i = 0; i < 60; i++) {
+        for (let i = 0; i < 70; i++) {
             ctx.beginPath();
             let x = Math.random() * 1024;
             let y = Math.random() * 256;
             ctx.moveTo(x, y);
-            ctx.lineTo(x + (Math.random() - 0.5) * 80, y + (Math.random() - 0.5) * 40);
+            ctx.lineTo(x + (Math.random() - 0.5) * 90, y + (Math.random() - 0.5) * 50);
             ctx.stroke();
         }
 
         // Gold Solder Pads Grid
-        ctx.fillStyle = 'rgba(212, 175, 55, 0.45)';
-        for (let x = 40; x < 980; x += 30) {
-            for (let y = 30; y < 220; y += 40) {
+        ctx.fillStyle = 'rgba(217, 119, 6, 0.6)';
+        for (let x = 40; x < 980; x += 28) {
+            for (let y = 30; y < 220; y += 38) {
                 ctx.fillRect(x, y, 3, 3);
             }
         }
 
         // Text engraving on PCB
-        ctx.fillStyle = 'rgba(212, 175, 55, 0.4)';
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.7)';
         ctx.font = 'bold 12px Fira Code, monospace';
-        ctx.fillText('DDR5-6400 CL32 HIGH-SPEED PCB REV 2.4', 40, 245);
+        ctx.fillText('DDR5-6400 CL32 HIGH-SPEED PCB REV 4.0 [4D HYPER-ARCH]', 40, 245);
 
         return new THREE.CanvasTexture(canvas);
     }
@@ -346,20 +420,20 @@ class RAM3DApp {
         canvas.height = 256;
         const ctx = canvas.getContext('2d');
 
-        ctx.fillStyle = '#121418';
+        ctx.fillStyle = '#1e293b';
         ctx.fillRect(0, 0, 256, 256);
 
         // Brand Marking & Specs Text
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+        ctx.fillStyle = 'rgba(248, 250, 252, 0.85)';
         ctx.font = 'bold 22px Fira Code, monospace';
         ctx.fillText('HYNIX DRAM', 30, 70);
         ctx.font = '16px Fira Code, monospace';
         ctx.fillText('DDR5 16GB IC', 30, 110);
         ctx.fillText('H5CG48MEBD', 30, 140);
-        ctx.fillText('2402-AA9', 30, 170);
+        ctx.fillText('2402-AA9 4D', 30, 170);
 
         // Pin 1 Indicator Circle
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.fillStyle = 'rgba(2, 132, 199, 0.9)';
         ctx.beginPath();
         ctx.arc(30, 30, 8, 0, Math.PI * 2);
         ctx.fill();
@@ -375,10 +449,10 @@ class RAM3DApp {
 
         const pcbGeometry = new THREE.BoxGeometry(pcbWidth, pcbHeight, pcbDepth);
         const pcbMaterial = new THREE.MeshStandardMaterial({
-            color: 0x0f1914,
+            color: 0xe2e8f0,
             map: this.pcbTexture,
-            roughness: 0.35,
-            metalness: 0.2
+            roughness: 0.25,
+            metalness: 0.4
         });
 
         const pcbMesh = new THREE.Mesh(pcbGeometry, pcbMaterial);
@@ -391,9 +465,9 @@ class RAM3DApp {
         // --- 2. Gold Contact Pins Array (288 Pins) ---
         const pinGroup = new THREE.Group();
         const pinMaterial = new THREE.MeshStandardMaterial({
-            color: 0xffd700,
-            metalness: 0.95,
-            roughness: 0.15
+            color: 0xd97706,
+            metalness: 0.98,
+            roughness: 0.1
         });
 
         const pinCountPerSide = 65;
@@ -419,7 +493,7 @@ class RAM3DApp {
             pinGroup.add(pin);
         }
 
-        // Key Notch Gap Marker (Virtual Mesh)
+        // Key Notch Gap Marker
         const notchGeo = new THREE.BoxGeometry(0.5, 0.4, pcbDepth + 0.04);
         const notchMat = new THREE.MeshBasicMaterial({ visible: false });
         const notchMesh = new THREE.Mesh(notchGeo, notchMat);
@@ -439,10 +513,10 @@ class RAM3DApp {
         const chipDepth = 0.1;
 
         const chipMaterial = new THREE.MeshStandardMaterial({
-            color: 0x181a20,
+            color: 0x1e293b,
             map: this.chipTexture,
-            roughness: 0.5,
-            metalness: 0.3
+            roughness: 0.4,
+            metalness: 0.4
         });
 
         this.dramChipsArray = [];
@@ -462,13 +536,12 @@ class RAM3DApp {
         this.ramGroup.add(dramGroup);
         this.meshParts['dram-chips'] = dramGroup;
 
-        // --- 4. PMIC & SPD Hub Micro Components (Center-Top DDR5 JEDEC Standard) ---
-        // PMIC Chip (Center Top)
+        // --- 4. PMIC & SPD Hub Micro Components ---
         const pmicGeo = new THREE.BoxGeometry(0.65, 0.65, 0.12);
         const pmicMat = new THREE.MeshStandardMaterial({
-            color: 0x2d3748,
-            metalness: 0.8,
-            roughness: 0.2
+            color: 0x334155,
+            metalness: 0.85,
+            roughness: 0.25
         });
         const pmicMesh = new THREE.Mesh(pmicGeo, pmicMat);
         pmicMesh.position.set(0, 0.75, pcbDepth / 2 + 0.06);
@@ -476,27 +549,25 @@ class RAM3DApp {
         this.ramGroup.add(pmicMesh);
         this.meshParts['pmic'] = pmicMesh;
 
-        // SPD Hub & Thermal Sensor IC Chip (Center-Top, Adjacent to PMIC)
         const spdGeo = new THREE.BoxGeometry(0.45, 0.45, 0.08);
-        const spdMat = new THREE.MeshStandardMaterial({ color: 0x1a202c, metalness: 0.6, roughness: 0.3 });
+        const spdMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.7, roughness: 0.3 });
         const spdMesh = new THREE.Mesh(spdGeo, spdMat);
         spdMesh.position.set(0.8, 0.75, pcbDepth / 2 + 0.04);
         spdMesh.userData = { id: 'spd' };
         this.ramGroup.add(spdMesh);
         this.meshParts['spd'] = spdMesh;
 
-        // --- 5. Aluminum Heat Spreader & RGB Strip ---
+        // --- 5. Bright Platinum Aluminium Heat Spreader & RGB Strip ---
         this.heatsinkGroup = new THREE.Group();
 
-        // Front Aluminum Plate
         const hsWidth = 11.2;
         const hsHeight = 2.0;
         const hsDepth = 0.08;
 
         const hsMaterial = new THREE.MeshStandardMaterial({
-            color: 0x1f2937,
-            metalness: 0.85,
-            roughness: 0.25
+            color: 0xf8fafc,
+            metalness: 0.92,
+            roughness: 0.18
         });
 
         // Front Plate
@@ -515,12 +586,12 @@ class RAM3DApp {
         this.backHsMesh.userData = { id: 'heatspreader' };
         this.heatsinkGroup.add(this.backHsMesh);
 
-        // Top RGB Light Strip Bar
+        // Top Neon RGB Light Strip Bar
         const rgbGeo = new THREE.BoxGeometry(11.25, 0.35, 0.3);
         this.rgbMat = new THREE.MeshStandardMaterial({
-            color: 0x00f2fe,
-            emissive: 0x00f2fe,
-            emissiveIntensity: 1.5,
+            color: 0x0284c7,
+            emissive: 0x0284c7,
+            emissiveIntensity: 1.6,
             roughness: 0.1
         });
         const rgbBar = new THREE.Mesh(rgbGeo, this.rgbMat);
@@ -532,8 +603,66 @@ class RAM3DApp {
         this.ramGroup.add(this.heatsinkGroup);
         this.meshParts['heatspreader'] = this.heatsinkGroup;
 
+        // --- 6. Build 4D Tesseract Wireframe Meshes for each Hotspot Component ---
+        ramComponentsData.forEach((comp) => {
+            const tess = new Tesseract4D(0.35);
+            const lineGeo = new THREE.BufferGeometry();
+            const initialPos = tess.projectTo3D(0, 0);
+            lineGeo.setAttribute('position', new THREE.BufferAttribute(initialPos, 3));
+
+            const lineMat = new THREE.LineBasicMaterial({
+                color: 0x7c3aed,
+                transparent: true,
+                opacity: 0.65,
+                linewidth: 1.5
+            });
+
+            const lineMesh = new THREE.LineSegments(lineGeo, lineMat);
+            lineMesh.position.set(comp.worldPos.x, comp.worldPos.y, comp.worldPos.z);
+            this.ramGroup.add(lineMesh);
+
+            this.tesseractMeshes.push({
+                mesh: lineMesh,
+                tess: tess,
+                basePos: comp.worldPos,
+                geo: lineGeo
+            });
+        });
+
         // Add Entire RAM Group to Scene
         this.scene.add(this.ramGroup);
+    }
+
+    // 4D Quantum Particle Cloud around RAM
+    build4DQuantumParticles() {
+        const count = 350;
+        const geometry = new THREE.BufferGeometry();
+        this.particle4DData = [];
+        const positions = new Float32Array(count * 3);
+
+        for (let i = 0; i < count; i++) {
+            const x = (Math.random() - 0.5) * 16;
+            const y = (Math.random() - 0.5) * 10;
+            const z = (Math.random() - 0.5) * 8;
+            const w = (Math.random() - 0.5) * 4;
+            this.particle4DData.push({ x, y, z, w });
+
+            positions[i * 3] = x;
+            positions[i * 3 + 1] = y;
+            positions[i * 3 + 2] = z;
+        }
+
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        const pMaterial = new THREE.PointsMaterial({
+            color: 0x0284c7,
+            size: 0.08,
+            transparent: true,
+            opacity: 0.5,
+            blending: THREE.AdditiveBlending
+        });
+
+        this.quantumParticles = new THREE.Points(geometry, pMaterial);
+        this.scene.add(this.quantumParticles);
     }
 
     setupHotspots() {
@@ -545,9 +674,23 @@ class RAM3DApp {
             node.id = `hotspot-${comp.id}`;
             node.setAttribute('data-id', comp.id);
 
+            const icon = document.createElement('i');
+            icon.className = 'fa-solid fa-vector-square hotspot-icon';
+            node.appendChild(icon);
+
             const label = document.createElement('div');
             label.className = 'hotspot-label';
-            label.innerText = comp.name.split(' (')[0];
+
+            const titleSpan = document.createElement('span');
+            titleSpan.innerText = comp.name.split(' (')[0];
+            label.appendChild(titleSpan);
+
+            const badge4D = document.createElement('span');
+            badge4D.className = 'hotspot-4d-badge';
+            badge4D.id = `badge4d-${comp.id}`;
+            badge4D.innerText = '4D: W = +0.00';
+            label.appendChild(badge4D);
+
             node.appendChild(label);
 
             node.addEventListener('click', (e) => {
@@ -569,12 +712,22 @@ class RAM3DApp {
 
         const widthHalf = window.innerWidth / 2;
         const heightHalf = window.innerHeight / 2;
+        const time = Date.now() * 0.0015;
 
-        this.hotspotElements.forEach((h) => {
+        this.hotspotElements.forEach((h, idx) => {
+            // Get transformed 3D world position considering RAM rotation
             const pos = new THREE.Vector3(h.worldPos.x, h.worldPos.y, h.worldPos.z);
+            pos.applyMatrix4(this.ramGroup.matrixWorld);
+
+            // Compute 4D dimension value shifting dynamically with rotation
+            const wVal = Math.sin(time * 2 + idx * 0.8) * 1.5;
+            const badge = document.getElementById(`badge4d-${h.id}`);
+            if (badge) {
+                badge.innerText = `4D Matrix: [W: ${wVal >= 0 ? '+' : ''}${wVal.toFixed(2)}]`;
+            }
+
             pos.project(this.camera);
 
-            // Check if behind camera
             if (pos.z > 1) {
                 h.element.style.display = 'none';
                 return;
@@ -587,6 +740,47 @@ class RAM3DApp {
             h.element.style.left = `${x}px`;
             h.element.style.top = `${y}px`;
         });
+    }
+
+    updatePopoverPosition() {
+        const popover = document.getElementById('inline-popover');
+        if (!popover || popover.classList.contains('hidden') || !state.selectedComponent) return;
+
+        const comp = state.selectedComponent;
+        const pos = new THREE.Vector3(comp.worldPos.x, comp.worldPos.y, comp.worldPos.z);
+        pos.applyMatrix4(this.ramGroup.matrixWorld);
+        pos.project(this.camera);
+
+        const widthHalf = window.innerWidth / 2;
+        const heightHalf = window.innerHeight / 2;
+
+        let x = (pos.x * widthHalf) + widthHalf + 25;
+        let y = -(pos.y * heightHalf) + heightHalf - 120;
+
+        // Edge checks to keep popover card inside screen bounds
+        const popoverWidth = 420;
+        const popoverHeight = 450;
+
+        if (x + popoverWidth > window.innerWidth - 20) {
+            x = (pos.x * widthHalf) + widthHalf - popoverWidth - 25;
+        }
+        if (x < 20) x = 20;
+
+        if (y + popoverHeight > window.innerHeight - 20) {
+            y = window.innerHeight - popoverHeight - 20;
+        }
+        if (y < 70) y = 70;
+
+        popover.style.left = `${x}px`;
+        popover.style.top = `${y}px`;
+
+        // Update live 4D coordinates on Popover Card Header
+        const time = Date.now() * 0.0015;
+        const wVal = Math.sin(time * 2) * 1.5;
+        const coordsSpan = document.getElementById('comp-4d-coords');
+        if (coordsSpan) {
+            coordsSpan.innerText = `4D Matrix: X: ${comp.worldPos.x.toFixed(1)}, Y: ${comp.worldPos.y.toFixed(1)}, Z: ${comp.worldPos.z.toFixed(1)}, W: ${(wVal >= 0 ? '+' : '') + wVal.toFixed(2)}`;
+        }
     }
 
     selectComponent(id) {
@@ -614,12 +808,18 @@ class RAM3DApp {
             onUpdate: () => this.controls.update()
         });
 
-        // 2. Open Side Info Drawer & Populate Content
-        this.updateDrawerContent(comp);
-        document.getElementById('info-drawer').classList.add('open');
+        // 2. Open Inline Popover Directly on the 3D Component
+        this.updatePopoverContent(comp);
+        const popover = document.getElementById('inline-popover');
+        if (popover) {
+            popover.classList.remove('hidden');
+            this.updatePopoverPosition();
+        }
+
+        this.flashComponentHighlight(comp.id, true);
     }
 
-    updateDrawerContent(comp) {
+    updatePopoverContent(comp) {
         document.getElementById('comp-badge').innerText = comp.badge;
         document.getElementById('comp-title').innerText = comp.name;
         document.getElementById('comp-subtitle').innerText = comp.type;
@@ -631,12 +831,12 @@ class RAM3DApp {
         document.getElementById('comp-funfact').innerText = comp.funFact;
     }
 
-    // Visual 3D Component Flash Animation (Cyan/Emerald for correct, Rose/Red for wrong)
+    // Visual 3D Component Flash Animation
     flashComponentHighlight(componentId, isCorrect) {
         const targetPart = this.meshParts[componentId];
         if (!targetPart) return;
 
-        const flashColor = new THREE.Color(isCorrect ? 0x00f2fe : 0xff2a6d);
+        const flashColor = new THREE.Color(isCorrect ? 0x0284c7 : 0xe11d48);
         const materials = new Set();
 
         if (targetPart.isMesh && targetPart.material) {
@@ -652,19 +852,16 @@ class RAM3DApp {
         materials.forEach(mat => {
             if (!mat) return;
 
-            // Cache true original emissive state once
             if (mat.userData.origEmissive === undefined) {
                 mat.userData.origEmissive = mat.emissive ? mat.emissive.getHex() : 0x000000;
                 mat.userData.origIntensity = mat.emissiveIntensity !== undefined ? mat.emissiveIntensity : 0.0;
             }
 
-            // Clear any pending timeout from previous clicks
             if (mat.userData.flashTimeout) {
                 clearTimeout(mat.userData.flashTimeout);
             }
 
-            // Adjust glow intensity so large components don't blow out into solid flat blocks
-            const targetIntensity = (componentId === 'heatspreader' || componentId === 'pcb') ? 0.7 : 1.4;
+            const targetIntensity = 1.2;
 
             if (mat.emissive) {
                 mat.emissive.copy(flashColor);
@@ -690,19 +887,16 @@ class RAM3DApp {
             btn.classList.add('active');
             textSpan.innerText = 'Gabungkan Komponen';
 
-            // Explode Heatspreader Plates
             gsap.to(this.frontHsMesh.position, { z: 1.5, duration: 0.8, ease: 'back.out(1.2)' });
             gsap.to(this.backHsMesh.position, { z: -1.5, duration: 0.8, ease: 'back.out(1.2)' });
 
-            // Explode Chips slightly
             this.dramChipsArray.forEach((chip, i) => {
                 gsap.to(chip.position, { z: 0.45, duration: 0.6, delay: i * 0.03 });
             });
         } else {
             btn.classList.remove('active');
-            textSpan.innerText = 'Mode Bongkar (Exploded)';
+            textSpan.innerText = 'Mode Bongkar';
 
-            // Re-assemble
             gsap.to(this.frontHsMesh.position, { z: 0.12 + 0.1 + 0.04 + 0.02, duration: 0.6 });
             gsap.to(this.backHsMesh.position, { z: -(0.12 + 0.1 + 0.04 + 0.02), duration: 0.6 });
 
@@ -730,15 +924,37 @@ class RAM3DApp {
         }
     }
 
+    toggleAutoRotate() {
+        state.autoRotate = !state.autoRotate;
+        sfx.playClick();
+
+        const btn = document.getElementById('btn-autorotate');
+        const textSpan = document.getElementById('autorotate-text');
+
+        if (state.autoRotate) {
+            btn.classList.add('active');
+            textSpan.innerText = 'Rotasi 4D: ON';
+        } else {
+            btn.classList.remove('active');
+            textSpan.innerText = 'Rotasi 4D: OFF';
+        }
+    }
+
     resetCamera() {
         sfx.playClick();
         gsap.to(this.camera.position, { x: 0, y: 1.2, z: 8.5, duration: 1.0 });
         gsap.to(this.controls.target, { x: 0, y: 0, z: 0, duration: 1.0, onUpdate: () => this.controls.update() });
-        document.getElementById('info-drawer').classList.remove('open');
+        const popover = document.getElementById('inline-popover');
+        if (popover) popover.classList.add('hidden');
+        state.selectedComponent = null;
     }
 
     onPointerDown(event) {
-        // Calculate pointer location in normalized device coordinates (-1 to +1)
+        // Ignore clicks if clicking inside the popover UI card or controls toolbar
+        if (event.target.closest('#inline-popover') || event.target.closest('.controls-toolbar') || event.target.closest('.navbar')) {
+            return;
+        }
+
         this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
         this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
@@ -747,7 +963,6 @@ class RAM3DApp {
 
         if (intersects.length > 0) {
             let hitObj = intersects[0].object;
-            // Traverse up to find object with userData.id
             while (hitObj && !hitObj.userData.id && hitObj.parent) {
                 hitObj = hitObj.parent;
             }
@@ -770,19 +985,63 @@ class RAM3DApp {
         requestAnimationFrame(() => this.animate());
 
         this.controls.update();
-        this.updateHotspotsPosition();
 
         const time = Date.now() * 0.001;
 
-        // Subtle idle oscillation animation for RAM module when idle
-        if (!state.selectedComponent && !state.explodedView) {
-            this.ramGroup.rotation.y = Math.sin(time * 0.5) * 0.08;
+        // Continuous 3D/4D Auto-Rotation of RAM module ("gambar ramnya bergerak sendiri")
+        if (state.autoRotate) {
+            this.ramGroup.rotation.y += 0.007; // Continuous rotation around Y
+            this.ramGroup.rotation.x = Math.sin(time * 0.7) * 0.08; // Gentle 4D pitch wobble
+            this.ramGroup.rotation.z = Math.cos(time * 0.5) * 0.04; // Gentle 4D roll wobble
+        }
+
+        // Animate 4D Tesseract Wireframes on each Hotspot component
+        const angleXW = time * 1.5;
+        const angleYW = time * 0.8;
+
+        this.tesseractMeshes.forEach((item, i) => {
+            const newPositions = item.tess.projectTo3D(angleXW + i, angleYW + i * 0.5);
+            item.geo.setAttribute('position', new THREE.BufferAttribute(newPositions, 3));
+            item.geo.attributes.position.needsUpdate = true;
+        });
+
+        // Animate 4D Quantum Particles Cloud
+        if (this.quantumParticles) {
+            const posAttr = this.quantumParticles.geometry.attributes.position;
+            const positions = posAttr.array;
+
+            for (let i = 0; i < this.particle4DData.length; i++) {
+                const p = this.particle4DData[i];
+                const w = Math.sin(time + i * 0.1) * 2;
+                const factor = 1 / (2.5 - w);
+                positions[i * 3] = p.x * factor;
+                positions[i * 3 + 1] = p.y * factor;
+                positions[i * 3 + 2] = p.z * factor;
+            }
+            posAttr.needsUpdate = true;
         }
 
         // Breathing animation for RGB bar
         if (this.rgbMat) {
             this.rgbMat.emissiveIntensity = 1.3 + Math.sin(time * 3) * 0.5;
         }
+
+        // Realtime update of 4D HUD Matrix Values
+        const wVal = Math.sin(time * 1.5) * 1.5;
+        const pitchVal = (this.ramGroup.rotation.x * 180 / Math.PI).toFixed(2);
+        const yawVal = (this.ramGroup.rotation.y * 180 / Math.PI % 360).toFixed(2);
+
+        const wElem = document.getElementById('val-4d-w');
+        const pitchElem = document.getElementById('val-4d-pitch');
+        const yawElem = document.getElementById('val-4d-yaw');
+
+        if (wElem) wElem.innerText = `${wVal >= 0 ? '+' : ''}${wVal.toFixed(3)}`;
+        if (pitchElem) pitchElem.innerText = `${pitchVal >= 0 ? '+' : ''}${pitchVal}°`;
+        if (yawElem) yawElem.innerText = `${yawVal}°`;
+
+        // Update positions of HTML 3D Hotspots & Popover
+        this.updateHotspotsPosition();
+        this.updatePopoverPosition();
 
         this.renderer.render(this.scene, this.camera);
     }
@@ -792,7 +1051,6 @@ class RAM3DApp {
 class UIController {
     constructor() {
         this.app3D = null;
-        this.toastTimeout = null;
         this.bindEvents();
     }
 
@@ -812,6 +1070,7 @@ class UIController {
         });
 
         // Controls Toolbar
+        document.getElementById('btn-autorotate').addEventListener('click', () => this.app3D.toggleAutoRotate());
         document.getElementById('btn-reset-cam').addEventListener('click', () => this.app3D.resetCamera());
         document.getElementById('btn-exploded').addEventListener('click', () => this.app3D.toggleExplodedView());
         document.getElementById('btn-toggle-heatsink').addEventListener('click', () => this.app3D.toggleHeatsink());
@@ -823,10 +1082,11 @@ class UIController {
             this.app3D.updateHotspotsPosition();
         });
 
-        // Info Drawer Controls
-        document.getElementById('btn-close-drawer').addEventListener('click', () => {
+        // Inline Popover Card Controls
+        document.getElementById('btn-close-popover').addEventListener('click', () => {
             sfx.playClick();
-            document.getElementById('info-drawer').classList.remove('open');
+            const popover = document.getElementById('inline-popover');
+            if (popover) popover.classList.add('hidden');
             state.selectedComponent = null;
         });
 
