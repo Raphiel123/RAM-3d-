@@ -40,9 +40,6 @@
                 <button id="btn-mode-ddr" class="nav-btn">
                     <i class="fa-solid fa-layer-group"></i> Evolusi DDR
                 </button>
-                <button id="btn-mode-quiz" class="nav-btn highlight">
-                    <i class="fa-solid fa-gamepad"></i> Uji Pemahaman (Kuis)
-                </button>
             </nav>
 
             <div class="navbar-actions">
@@ -144,49 +141,7 @@
                 </div>
             </aside>
 
-            <!-- Quiz Floating HUD (Non-Blocking, Interactive 3D Viewport) -->
-            <div id="quiz-hud" class="quiz-hud hidden">
-                <div class="quiz-card glass-panel">
-                    <div class="quiz-header">
-                        <div class="quiz-badge"><i class="fa-solid fa-trophy"></i> Uji Pemahaman 3D</div>
-                        <button id="btn-close-quiz" class="close-btn" title="Tutup Kuis"><i class="fa-solid fa-xmark"></i></button>
-                    </div>
 
-                    <div class="quiz-progress-bar">
-                        <div id="quiz-progress" class="quiz-progress-fill"></div>
-                    </div>
-
-                    <div class="quiz-body">
-                        <div class="score-board">
-                            <span>Soal <strong id="quiz-step">1</strong> / 5</span>
-                            <span>Skor: <strong id="quiz-score">0</strong> Poin</span>
-                        </div>
-                        <h3 id="quiz-question">Pertanyaan kuis akan muncul di sini...</h3>
-                        <p class="quiz-instruction"><i class="fa-solid fa-hand-pointer"></i> <strong>Tugas Anda:</strong> Klik langsung komponen pada model 3D RAM di layar!</p>
-                    </div>
-
-                    <div class="quiz-footer">
-                        <button id="btn-skip-quiz" class="secondary-btn">Lewati Soal Ini</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Real-Time Quiz Feedback Toast -->
-            <div id="quiz-toast" class="quiz-toast hidden">
-                <div class="toast-card glass-panel">
-                    <div id="toast-icon-wrap" class="toast-icon-box">
-                        <i id="toast-icon" class="fa-solid fa-circle-check"></i>
-                    </div>
-                    <div class="toast-info">
-                        <div class="toast-head">
-                            <h4 id="toast-title">BENAR!</h4>
-                            <span id="toast-badge" class="toast-pill">+20 Poin</span>
-                        </div>
-                        <p id="toast-desc">Anda mengklik: DRAM IC Chips.</p>
-                        <p id="toast-hint" class="toast-hint"></p>
-                    </div>
-                </div>
-            </div>
 
             <!-- DDR Evolution Modal -->
             <div id="ddr-modal" class="modal-overlay hidden">
@@ -285,13 +240,6 @@
                                 <h4>Mode Bongkar (Exploded View)</h4>
                                 <p>Gunakan tombol <b>Mode Bongkar</b> di toolbar bawah untuk memisahkan pendingin
                                     aluminium dan melihat struktur IC di dalamnya.</p>
-                            </div>
-                        </div>
-                        <div class="help-step">
-                            <div class="help-icon"><i class="fa-solid fa-gamepad"></i></div>
-                            <div>
-                                <h4>Mode Kuis Interaktif</h4>
-                                <p>Uji pemahaman Anda dengan mengklik komponen 3D yang diminta oleh pertanyaan kuis!</p>
                             </div>
                         </div>
                     </div>
