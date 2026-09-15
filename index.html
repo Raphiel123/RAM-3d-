@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modul Pembelajaran Interaktif 3D: Hardware RAM</title>
+    <meta name="description"
+        content="Modul pembelajaran interaktif 3D komponen hardware komputer RAM (Random Access Memory). Pelajari fungsi, bagian-bagian, dan arsitektur RAM secara 3D.">
+    <!-- Google Fonts: Outfit & Fira Code -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Outfit:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- App Styles -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="app">
+        <!-- Top Navigation Bar -->
+        <header class="navbar">
+            <div class="brand">
+                <div class="brand-icon">
+                    <i class="fa-solid fa-microchip"></i>
+                </div>
+                <div class="brand-text">
+                    <span class="brand-title">RAM 3D Inspector</span>
+                    <span class="brand-subtitle">Modul Pembelajaran Arsitektur Komputer</span>
+                </div>
+            </div>
+
+            <nav class="nav-links">
+                <button id="btn-mode-inspect" class="nav-btn active">
+                    <i class="fa-solid fa-cube"></i> Mode Inspeksi 3D
+                </button>
+                <button id="btn-mode-ddr" class="nav-btn">
+                    <i class="fa-solid fa-layer-group"></i> Evolusi DDR
+                </button>
+                <button id="btn-mode-quiz" class="nav-btn highlight">
+                    <i class="fa-solid fa-gamepad"></i> Uji Pemahaman (Kuis)
+                </button>
+            </nav>
+
+            <div class="navbar-actions">
+                <button id="btn-sound" class="icon-btn" title="Toggle Efek Suara (Audio SFX)">
+                    <i class="fa-solid fa-volume-high"></i>
+                </button>
+                <button id="btn-help" class="icon-btn" title="Petunjuk Penggunaan">
+                    <i class="fa-solid fa-circle-question"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Workspace Container -->
+        <main class="viewport-container" id="viewport-container">
+            <!-- 3D Canvas Container -->
+            <div id="canvas-container"></div>
+
+            <!-- Loading Screen Overlay -->
+            <div id="loading-screen" class="loading-overlay">
+                <div class="spinner-box">
+                    <div class="tech-spinner"></div>
+                    <h2>Memuat Model 3D RAM...</h2>
+                    <p>Membangun arsitektur komponen & sirkuit 3D...</p>
+                </div>
+            </div>
+
+            <!-- Floating 3D Control Bar -->
+            <div class="controls-toolbar">
+                <button id="btn-reset-cam" class="tool-btn" title="Reset Pandangan Kamera">
+                    <i class="fa-solid fa-arrows-to-eye"></i>
+                    <span>Reset Kamera</span>
+                </button>
+                <div class="tool-divider"></div>
+                <button id="btn-exploded" class="tool-btn" title="Pisahkan/Bongkar Komponen RAM">
+                    <i class="fa-solid fa-diagram-project"></i>
+                    <span id="exploded-text">Mode Bongkar (Exploded)</span>
+                </button>
+                <div class="tool-divider"></div>
+                <button id="btn-toggle-hotspots" class="tool-btn active" title="Tampilkan/Sembunyikan Titik Penanda">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <span>Penanda Hotspot</span>
+                </button>
+                <div class="tool-divider"></div>
+                <button id="btn-toggle-heatsink" class="tool-btn active" title="Lepas/Pasang Heatspreader Aluminium">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <span id="heatsink-text">Sembunyikan Pendingin</span>
+                </button>
+            </div>
+
+            <!-- Interactive Instruction Hint -->
+            <div class="interaction-hint">
+                <i class="fa-solid fa-hand-pointer"></i>
+                <span>Klik & geser untuk rotasi 360° • Scroll untuk Zoom • Klik <b>Hotspot Glowing</b> atau bagian RAM untuk penjelasan</span>
+            </div>
+
+            <!-- Side Info Drawer (Detail Komponen) -->
+            <aside id="info-drawer" class="info-drawer">
+                <button id="btn-close-drawer" class="close-btn" aria-label="Tutup Panel Info">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+
+                <div class="drawer-header">
+                    <span id="comp-badge" class="comp-badge">Komponen Utama</span>
+                    <h2 id="comp-title">Memilih Komponen...</h2>
+                    <p id="comp-subtitle" class="comp-subtitle">Klik titik hotspot di model 3D untuk melihat detail.</p>
+                </div>
+
+                <div class="drawer-body">
+                    <div class="info-card highlight-card">
+                        <h3><i class="fa-solid fa-bullseye"></i> Fungsi Utama</h3>
+                        <p id="comp-function">Informasi mengenai fungsi komponen RAM akan tampil di sini.</p>
+                    </div>
+
+                    <div class="info-card">
+                        <h3><i class="fa-solid fa-gear"></i> Cara Kerja & Arsitektur</h3>
+                        <p id="comp-architecture">Penjelasan mekanisme kerja hardware dan arsitektur sirkuit.</p>
+                    </div>
+
+                    <div class="info-card specs-card">
+                        <h3><i class="fa-solid fa-microchip"></i> Spesifikasi & Karakteristik</h3>
+                        <ul id="comp-specs" class="specs-list">
+                            <li><span>Tipe:</span> <strong id="spec-type">-</strong></li>
+                            <li><span>Lokasi:</span> <strong id="spec-location">-</strong></li>
+                            <li><span>Material:</span> <strong id="spec-material">-</strong></li>
+                        </ul>
+                    </div>
+
+                    <div class="info-card tip-card">
+                        <h3><i class="fa-solid fa-lightbulb"></i> Tahukah Anda?</h3>
+                        <p id="comp-funfact">Fakta unik seputar komponen RAM.</p>
+                    </div>
+                </div>
+
+                <div class="drawer-footer">
+                    <button id="btn-prev-comp" class="secondary-btn"><i class="fa-solid fa-chevron-left"></i>
+                        Sebelum</button>
+                    <button id="btn-next-comp" class="secondary-btn">Berikut <i
+                            class="fa-solid fa-chevron-right"></i></button>
+                </div>
+            </aside>
+
+            <!-- Quiz Floating HUD (Non-Blocking, Interactive 3D Viewport) -->
+            <div id="quiz-hud" class="quiz-hud hidden">
+                <div class="quiz-card glass-panel">
+                    <div class="quiz-header">
+                        <div class="quiz-badge"><i class="fa-solid fa-trophy"></i> Uji Pemahaman 3D</div>
+                        <button id="btn-close-quiz" class="close-btn" title="Tutup Kuis"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+
+                    <div class="quiz-progress-bar">
+                        <div id="quiz-progress" class="quiz-progress-fill"></div>
+                    </div>
+
+                    <div class="quiz-body">
+                        <div class="score-board">
+                            <span>Soal <strong id="quiz-step">1</strong> / 5</span>
+                            <span>Skor: <strong id="quiz-score">0</strong> Poin</span>
+                        </div>
+                        <h3 id="quiz-question">Pertanyaan kuis akan muncul di sini...</h3>
+                        <p class="quiz-instruction"><i class="fa-solid fa-hand-pointer"></i> <strong>Tugas Anda:</strong> Klik langsung komponen pada model 3D RAM di layar!</p>
+                    </div>
+
+                    <div class="quiz-footer">
+                        <button id="btn-skip-quiz" class="secondary-btn">Lewati Soal Ini</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Real-Time Quiz Feedback Toast -->
+            <div id="quiz-toast" class="quiz-toast hidden">
+                <div class="toast-card glass-panel">
+                    <div id="toast-icon-wrap" class="toast-icon-box">
+                        <i id="toast-icon" class="fa-solid fa-circle-check"></i>
+                    </div>
+                    <div class="toast-info">
+                        <div class="toast-head">
+                            <h4 id="toast-title">BENAR!</h4>
+                            <span id="toast-badge" class="toast-pill">+20 Poin</span>
+                        </div>
+                        <p id="toast-desc">Anda mengklik: DRAM IC Chips.</p>
+                        <p id="toast-hint" class="toast-hint"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DDR Evolution Modal -->
+            <div id="ddr-modal" class="modal-overlay hidden">
+                <div class="ddr-card glass-panel">
+                    <div class="modal-header">
+                        <h2><i class="fa-solid fa-layer-group"></i> Perbandingan Generasi RAM (DDR3 vs DDR4 vs DDR5)</h2>
+                        <button id="btn-close-ddr" class="close-btn"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <div class="ddr-body">
+                        <table class="ddr-table">
+                            <thead>
+                                <tr>
+                                    <th>Karakteristik</th>
+                                    <th>DDR3</th>
+                                    <th>DDR4</th>
+                                    <th>DDR5 (Standar Saat Ini)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Kecepatan Data (MT/s)</strong></td>
+                                    <td>800 - 2133 MT/s</td>
+                                    <td>1600 - 3200 MT/s</td>
+                                    <td>4800 - 8400+ MT/s</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Tegangan (Voltase)</strong></td>
+                                    <td>1.5V (Tinggi)</td>
+                                    <td>1.2V (Hemat)</td>
+                                    <td>1.1V (Sangat Efisien)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Manajemen Daya (PMIC)</strong></td>
+                                    <td>Di Motherboard</td>
+                                    <td>Di Motherboard</td>
+                                    <td><strong>Terintegrasi di Modul RAM</strong></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Jumlah Pin Kontak</strong></td>
+                                    <td>240 Pin</td>
+                                    <td>288 Pin (Berlekuk)</td>
+                                    <td>288 Pin (Notch Tengah Baru)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Posisi Notch (Takik)</strong></td>
+                                    <td>Kiri Tengah</td>
+                                    <td>Sedikit ke Kanan</td>
+                                    <td>Hampir di Tengah Sempurna</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Kapasitas Max per Modul</strong></td>
+                                    <td>8 GB</td>
+                                    <td>32 GB</td>
+                                    <td><strong>Hingga 128 GB+</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="ddr-highlight-box">
+                            <i class="fa-solid fa-circle-info"></i>
+                            <p><strong>Catatan Penting Arsitektur:</strong> RAM DDR3, DDR4, dan DDR5 memiliki posisi
+                                takik (notch) yang berbeda secara sengaja. Hal ini untuk mencegah kesalahan fisik saat
+                                memasang jenis modul RAM yang tidak didukung oleh slot motherboard!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Help & Guide Modal -->
+            <div id="help-modal" class="modal-overlay hidden">
+                <div class="help-card glass-panel">
+                    <div class="modal-header">
+                        <h2><i class="fa-solid fa-circle-question"></i> Petunjuk Penggunaan Modul</h2>
+                        <button id="btn-close-help" class="close-btn"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <div class="help-body">
+                        <div class="help-step">
+                            <div class="help-icon"><i class="fa-solid fa-arrows-spin"></i></div>
+                            <div>
+                                <h4>Navigasi 3D</h4>
+                                <p>Tahan & geser klik kiri mouse untuk memutar objek RAM 360°. Scroll roda mouse untuk
+                                    memperbesar/memperkecil (zoom).</p>
+                            </div>
+                        </div>
+                        <div class="help-step">
+                            <div class="help-icon"><i class="fa-solid fa-hand-pointer"></i></div>
+                            <div>
+                                <h4>Melihat Detail Komponen</h4>
+                                <p>Klik pada titik <b>Hotspot Glowing</b> bercahaya atau klik bagian fisik objek 3D
+                                    secara langsung untuk membuka kartu penjelasan resmi.</p>
+                            </div>
+                        </div>
+                        <div class="help-step">
+                            <div class="help-icon"><i class="fa-solid fa-diagram-project"></i></div>
+                            <div>
+                                <h4>Mode Bongkar (Exploded View)</h4>
+                                <p>Gunakan tombol <b>Mode Bongkar</b> di toolbar bawah untuk memisahkan pendingin
+                                    aluminium dan melihat struktur IC di dalamnya.</p>
+                            </div>
+                        </div>
+                        <div class="help-step">
+                            <div class="help-icon"><i class="fa-solid fa-gamepad"></i></div>
+                            <div>
+                                <h4>Mode Kuis Interaktif</h4>
+                                <p>Uji pemahaman Anda dengan mengklik komponen 3D yang diminta oleh pertanyaan kuis!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- External 3D & Animation Libraries via CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <!-- Main Application Logic Script -->
+    <script src="app.js"></script>
+</body>
+
+</html>
