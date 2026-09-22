@@ -43,6 +43,12 @@
             </nav>
 
             <div class="navbar-actions">
+                <button id="btn-ddr-mobile" class="icon-btn mobile-only" title="Tabel Perbandingan Evolusi DDR">
+                    <i class="fa-solid fa-layer-group"></i>
+                </button>
+                <button id="btn-theme" class="icon-btn" title="Toggle Mode Gelap / Terang (Dark / Light Mode)">
+                    <i class="fa-solid fa-moon"></i>
+                </button>
                 <button id="btn-sound" class="icon-btn" title="Toggle Efek Suara (Audio SFX)">
                     <i class="fa-solid fa-volume-high"></i>
                 </button>
@@ -88,9 +94,14 @@
                     <span>Penanda 4D</span>
                 </button>
                 <div class="tool-divider"></div>
-                <button id="btn-toggle-heatsink" class="tool-btn active" title="Lepas/Pasang Heatspreader Aluminium">
-                    <i class="fa-solid fa-shield-halved"></i>
-                    <span id="heatsink-text">Sembunyikan Pendingin</span>
+                <button id="btn-toggle-heatsink" class="tool-btn" title="Putar RAM 180° untuk memeriksa sisi depan & belakang">
+                    <i class="fa-solid fa-arrows-rotate"></i>
+                    <span id="heatsink-text">Balik Sisi RAM</span>
+                </button>
+                <div class="tool-divider"></div>
+                <button id="btn-auto-tour" class="tool-btn active" title="Toggle Tur Edukasi Otomatis Antar Bagian RAM">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                    <span id="auto-tour-text">Tur Otomatis: ON</span>
                 </button>
             </div>
 
@@ -108,7 +119,7 @@
             <!-- Interactive Instruction Hint -->
             <div class="interaction-hint">
                 <i class="fa-solid fa-cube"></i>
-                <span>RAM Berotasi Otomatis dalam Ruang 4D • Klik <b>Hotspot Glowing</b> atau Komponen untuk melihat Penjelasan Langsung di Objek</span>
+                <span id="interaction-hint-text">RAM Berotasi Otomatis dalam Ruang 4D • Klik <b>Hotspot Glowing</b> atau Komponen untuk melihat Penjelasan Langsung di Objek</span>
             </div>
 
             <!-- Inline 3D Popover Card (Penjelasan Langsung di Komponen RAM) -->
@@ -160,6 +171,20 @@
                         <button id="btn-prev-comp" class="secondary-btn"><i class="fa-solid fa-chevron-left"></i> Sebelum</button>
                         <button id="btn-next-comp" class="secondary-btn">Berikut <i class="fa-solid fa-chevron-right"></i></button>
                     </div>
+
+                    <!-- Auto-Tour Next Component Countdown Bar -->
+                    <div id="tour-advance-bar" class="tour-advance-bar hidden">
+                        <div class="tour-advance-text">
+                            <i class="fa-solid fa-circle-play fa-fade"></i>
+                            <span>Pindah ke bagian berikutnya dalam <strong id="tour-timer-count">3</strong>d...</span>
+                        </div>
+                        <div class="tour-advance-actions">
+                            <button id="btn-tour-pause" class="tour-mini-btn" title="Jeda Tur Otomatis"><i class="fa-solid fa-pause"></i> Jeda</button>
+                            <button id="btn-tour-skip" class="tour-mini-btn tour-mini-btn-primary" title="Lanjut Sekarang"><i class="fa-solid fa-forward-step"></i> Lanjut</button>
+                        </div>
+                    </div>
+
+                    <div class="typing-skip-hint"><i class="fa-solid fa-bolt"></i> Klik kartu untuk menampilkan seluruh teks langsung</div>
                 </div>
             </div>
 
@@ -173,60 +198,60 @@
                         <button id="btn-close-ddr" class="close-btn"><i class="fa-solid fa-xmark"></i></button>
                     </div>
                     <div class="ddr-body">
-                        <table class="ddr-table">
-                            <thead>
-                                <tr>
-                                    <th>Karakteristik</th>
-                                    <th>DDR3</th>
-                                    <th>DDR4</th>
-                                    <th>DDR5 (Standar Saat Ini)</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td><strong>Kecepatan Data (MT/s)</strong></td>
-                                    <td>800 - 2133 MT/s</td>
-                                    <td>1600 - 3200 MT/s</td>
-                                    <td>4800 - 8400+ MT/s</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Tegangan (Voltase)</strong></td>
-                                    <td>1.5V (Tinggi)</td>
-                                    <td>1.2V (Hemat)</td>
-                                    <td>1.1V (Sangat Efisien)</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Manajemen Daya (PMIC)</strong></td>
-                                    <td>Di Motherboard</td>
-                                    <td>Di Motherboard</td>
-                                    <td><strong>Terintegrasi di Modul RAM</strong></td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Jumlah Pin Kontak</strong></td>
-                                    <td>240 Pin</td>
-                                    <td>288 Pin (Berlekuk)</td>
-                                    <td>288 Pin (Notch Tengah Baru)</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Posisi Notch (Takik)</strong></td>
-                                    <td>Kiri Tengah</td>
-                                    <td>Sedikit ke Kanan</td>
-                                    <td>Hampir di Tengah Sempurna</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Kapasitas Max per Modul</strong></td>
-                                    <td>8 GB</td>
-                                    <td>32 GB</td>
-                                    <td><strong>Hingga 128 GB+</strong></td>
-                                </tr>
-                            </tbody>
-                        </table>
+                        <div class="ddr-table-container">
+                            <table class="ddr-table">
+                                <thead>
+                                    <tr>
+                                        <th>Karakteristik</th>
+                                        <th>DDR3</th>
+                                        <th>DDR4</th>
+                                        <th>DDR5 (Standar Saat Ini)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Kecepatan Data (MT/s)</strong></td>
+                                        <td>800 - 2133 MT/s</td>
+                                        <td>1600 - 3200 MT/s</td>
+                                        <td>4800 - 8400+ MT/s</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Tegangan (Voltase)</strong></td>
+                                        <td>1.5V (Tinggi)</td>
+                                        <td>1.2V (Hemat)</td>
+                                        <td>1.1V (Sangat Efisien)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Manajemen Daya (PMIC)</strong></td>
+                                        <td>Di Motherboard</td>
+                                        <td>Di Motherboard</td>
+                                        <td><strong>Terintegrasi di Modul RAM</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Jumlah Pin Kontak</strong></td>
+                                        <td>240 Pin</td>
+                                        <td>288 Pin (Berlekuk)</td>
+                                        <td>288 Pin (Notch Tengah Baru)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Posisi Notch (Takik)</strong></td>
+                                        <td>Kiri Tengah</td>
+                                        <td>Sedikit ke Kanan</td>
+                                        <td>Hampir di Tengah Sempurna</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Kapasitas Max per Modul</strong></td>
+                                        <td>8 GB</td>
+                                        <td>32 GB</td>
+                                        <td><strong>Hingga 128 GB+</strong></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
 
                         <div class="ddr-highlight-box">
                             <i class="fa-solid fa-circle-info"></i>
-                            <p><strong>Catatan Penting Arsitektur:</strong> RAM DDR3, DDR4, dan DDR5 memiliki posisi
-                                takik (notch) yang berbeda secara sengaja. Hal ini untuk mencegah kesalahan fisik saat
-                                memasang jenis modul RAM yang tidak didukung oleh slot motherboard!</p>
+                            <p id="ddr-note"><strong>Catatan Penting Arsitektur:</strong> <span id="ddr-note-text">RAM DDR3, DDR4, dan DDR5 memiliki posisi takik (notch) yang berbeda secara sengaja. Hal ini untuk mencegah kesalahan fisik saat memasang jenis modul RAM yang tidak didukung oleh slot motherboard!</span></p>
                         </div>
                     </div>
                 </div>
@@ -244,24 +269,21 @@
                             <div class="help-icon"><i class="fa-solid fa-arrows-spin"></i></div>
                             <div>
                                 <h4>Navigasi 3D</h4>
-                                <p>Tahan & geser klik kiri mouse untuk memutar objek RAM 360°. Scroll roda mouse untuk
-                                    memperbesar/memperkecil (zoom).</p>
+                                <p class="help-step-desc">Tahan & geser klik kiri mouse untuk memutar objek RAM 360°. Scroll roda mouse untuk memperbesar/memperkecil (zoom).</p>
                             </div>
                         </div>
                         <div class="help-step">
                             <div class="help-icon"><i class="fa-solid fa-hand-pointer"></i></div>
                             <div>
                                 <h4>Melihat Detail Komponen</h4>
-                                <p>Klik pada titik <b>Hotspot Glowing</b> bercahaya atau klik bagian fisik objek 3D
-                                    secara langsung untuk membuka kartu penjelasan resmi.</p>
+                                <p class="help-step-desc">Klik pada titik <b>Hotspot Glowing</b> bercahaya atau klik bagian fisik objek 3D secara langsung untuk membuka kartu penjelasan resmi.</p>
                             </div>
                         </div>
                         <div class="help-step">
                             <div class="help-icon"><i class="fa-solid fa-diagram-project"></i></div>
                             <div>
                                 <h4>Mode Bongkar (Exploded View)</h4>
-                                <p>Gunakan tombol <b>Mode Bongkar</b> di toolbar bawah untuk memisahkan pendingin
-                                    aluminium dan melihat struktur IC di dalamnya.</p>
+                                <p class="help-step-desc">Gunakan tombol <b>Mode Bongkar</b> di toolbar bawah untuk memisahkan pendingin aluminium dan melihat struktur IC di dalamnya.</p>
                             </div>
                         </div>
                     </div>
